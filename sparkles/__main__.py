@@ -6,6 +6,9 @@ class Grid(object):
         self.width = width
         self.height = height
         self.square_size = square_size
+        self.x_count = width/square_size
+        self.y_count = height/square_size
+        self.selected = (10, 20)
 
     def draw(self):
         glColor4f(0.3, 0.3, 0.3, 5)
@@ -16,9 +19,18 @@ class Grid(object):
 
         for y in range(0, self.height, self.square_size):
             pyglet.graphics.draw(2, pyglet.gl.GL_LINES,
-                        ('v2i', (0, y, self.width, y))
+                    ('v2i', (0, y, self.width, y))
             )
 
+        glColor4f(1, 0, 0, 0.5)
+        x1 = self.selected[0] * self.square_size
+        x2 = x1 + self.square_size
+        y1 = self.selected[1] * self.square_size
+        y2 = y1 + self.square_size
+
+        pyglet.graphics.draw(4, pyglet.gl.GL_QUADS,
+                ('v2i', (x1,y1, x1,y2, x2,y2, x2,y1))
+        )
         glColor4f(1, 1, 1, 1)
 
 def main():
