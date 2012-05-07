@@ -8,18 +8,18 @@ class Grid(object):
         self.square_size = square_size
 
     def draw(self):
-        glColor4f(0.3, 0.8, 0.8, 1)
+        glColor4f(0.3, 0.3, 0.3, 5)
         for x in range(0, self.width, self.square_size):
             pyglet.graphics.draw(2, pyglet.gl.GL_LINES,
                     ('v2i', (x, 0, x, self.height))
             )
 
         for y in range(0, self.height, self.square_size):
-            glColor4f(1, 1, 1, 1)
             pyglet.graphics.draw(2, pyglet.gl.GL_LINES,
                         ('v2i', (0, y, self.width, y))
             )
 
+        glColor4f(1, 1, 1, 1)
 
 def main():
     """ your app starts here
