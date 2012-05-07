@@ -1,5 +1,6 @@
 import pyglet
 from pyglet.gl import *
+from pyglet.window import mouse
 
 class Grid(object):
     def __init__(self, width, height, square_size):
@@ -33,15 +34,18 @@ class Grid(object):
         )
         glColor4f(1, 1, 1, 1)
 
+    def set_selected(self, x, y):
+        self.selected = (x/self.square_size, y/self.square_size)
+
 def main():
     """ your app starts here
     """
     window = pyglet.window.Window()
 
-    label = pyglet.text.Label('whining',
+    label = pyglet.text.Label('WINNING!',
                           font_name='Times New Roman',
                           font_size=16,
-                          x=window.width//2, y=window.height//2,
+                          x=window.width//2, y=window.height - 20,
                           anchor_x='center', anchor_y='center')
 
     grid = Grid(window.width, window.height, 20)
@@ -52,6 +56,10 @@ def main():
         label.draw()
         grid.draw()
 
+    @window.event
+    def on_mouse_press(x, y, button, modifiers):
+        if button == mouse.LEFT:
+            grid.set_selected(x,y)
 
     pyglet.app.run()
 
