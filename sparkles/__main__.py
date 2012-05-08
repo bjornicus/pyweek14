@@ -2,6 +2,8 @@ import pyglet
 from pyglet.gl import *
 from pyglet.window import mouse
 
+COLOR_COMPONENT_MAX = 16.0
+
 class Grid(object):
     def __init__(self, width, height, square_size):
         self.width = width
@@ -10,19 +12,26 @@ class Grid(object):
         self.x_count = width/square_size
         self.y_count = height/square_size
         self.selected = (10, 20)
+        self.cells = {}
+        for x in range(self.x_count):
+            for y in range(self.y_count):
+                self.cells[x,y] = []
+        self.cells[15,5].append(Laser(-1,0, COLOR_COMPONENT_MAX,0,0 ))
+        self.cells[30,1].append(Laser(0,1, 0, 0, COLOR_COMPONENT_MAX/2))
 
     def draw(self):
-        glColor4f(0.3, 0.3, 0.3, 5)
-        for x in range(0, self.width, self.square_size):
-            pyglet.graphics.draw(2, pyglet.gl.GL_LINES,
-                    ('v2i', (x, 0, x, self.height))
-            )
+        self.draw_gridlines()
+        self.draw_selected_square()
+        self.draw_cells()
 
-        for y in range(0, self.height, self.square_size):
-            pyglet.graphics.draw(2, pyglet.gl.GL_LINES,
-                    ('v2i', (0, y, self.width, y))
-            )
+    def draw_cells(self):
+        for x in range(self.x_count):
+            for y in range(self.y_count):
+                for item in self.cells[x,y]:
+                    item.draw(x*self.square_size, y*self.square_size, self.square_size)
 
+
+    def draw_selected_square(self):
         glColor4f(1, 0, 0, 0.5)
         x1 = self.selected[0] * self.square_size
         x2 = x1 + self.square_size
@@ -34,8 +43,47 @@ class Grid(object):
         )
         glColor4f(1, 1, 1, 1)
 
+    def draw_gridlines(self):
+        glColor4f(0.3, 0.3, 0.3, 5)
+        for x in range(0, self.width, self.square_size):
+            pyglet.graphics.draw(2, pyglet.gl.GL_LINES,
+                    ('v2i', (x, 0, x, self.height))
+            )
+
+        for y in range(0, self.height, self.square_size):
+            pyglet.graphics.draw(2, pyglet.gl.GL_LINES,
+                    ('v2i', (0, y, self.width, y))
+            )
+
     def set_selected(self, x, y):
         self.selected = (x/self.square_size, y/self.square_size)
+
+
+class Laser(object):
+    def __init__(self, x_direction, y_direction, r, g, b):
+        self.direction = (x_direction, y_direction)
+        self.r = r
+        self.g = g
+        self.b = b
+        self.r_gl = r/COLOR_COMPONENT_MAX
+        self.g_gl = g/COLOR_COMPONENT_MAX
+        self.b_gl = b/COLOR_COMPONENT_MAX
+
+    def draw(self, x, y, size):
+        glColor4f(self.r_gl, self.g_gl, self.b_gl, 1)
+        glLineWidth(3)
+        x1 = x + size/2
+        x2 = x1 + self.direction[0] * 100
+        y1 = y + size/2
+        y2 = y1 + self.direction[1] * 100
+
+        pyglet.graphics.draw(2, pyglet.gl.GL_LINES,
+                ('v2i', (x1,y1, x2,y2,))
+        )
+        glColor4f(1, 1, 1, 1)
+        glLineWidth(1)
+
+
 
 def main():
     """ your app starts here
