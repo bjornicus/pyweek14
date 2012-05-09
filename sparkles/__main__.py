@@ -12,13 +12,17 @@ class Grid(object):
         self.square_size = square_size
         self.x_count = width/square_size
         self.y_count = height/square_size
+        #print self.x_count, self.y_count
         self.selected = (10, 20)
         self.cells = {}
         for x in range(self.x_count):
             for y in range(self.y_count):
                 self.cells[x,y] = []
         self.cells[15,5].append(ColorStreamSource(-1,0, COLOR_COMPONENT_MAX,0,0 ))
-        self.cells[30,1].append(ColorStreamSource(0,1, 0, 0, COLOR_COMPONENT_MAX/2))
+        self.cells[30,1].append(ColorStreamSource(0,1, 0, 0, COLOR_COMPONENT_MAX))
+        self.cells[5,15].append(ColorStreamSource(1,0, 0, COLOR_COMPONENT_MAX,0 ))
+        self.cells[2,20].append(ColorStreamSource(0,-1, 0, COLOR_COMPONENT_MAX, COLOR_COMPONENT_MAX))
+        self.cells[10,5].append(ColorSink())
 
     def draw(self):
         self.draw_gridlines()
@@ -40,6 +44,10 @@ class Grid(object):
         while (x > 0 and x < self.x_count and y > 0 and y < self.y_count):
             x += stream.output_direction.x
             y += stream.output_direction.y
+            if not self.cells.has_key((x,y)):
+                break
+            if len(self.cells[x,y]) > 0:
+                break
         x2 = x*self.square_size + self.square_size/2
         y2 = y*self.square_size + self.square_size/2
         pyglet.graphics.draw(2, pyglet.gl.GL_LINES,
