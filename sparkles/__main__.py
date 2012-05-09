@@ -6,6 +6,7 @@ COLOR_COMPONENT_MAX = 16.0
 
 class Grid(object):
     def __init__(self, width, height, square_size):
+        super(Grid, self).__init__()
         self.width = width
         self.height = height
         self.square_size = square_size
@@ -75,11 +76,13 @@ class Grid(object):
         self.selected = (x/self.square_size, y/self.square_size)
 class Vector2d(object):
     def __init__(self, x, y):
+        super(Vector2d, self).__init__()
         self.x = x
         self.y = y
 
 class ColorStream(object):
     def __init__(self, x_out, y_out):
+        super(ColorStream, self).__init__()
         self.output_direction = Vector2d(x_out, y_out)
         self.r = 0
         self.g = 0
@@ -87,7 +90,7 @@ class ColorStream(object):
     
 class ColorStreamSource(ColorStream):
     def __init__(self, x_out, y_out, r, g, b):
-        ColorStream.__init__(self, x_out, y_out)
+        super(ColorStreamSource, self).__init__(x_out, y_out)
         self.r = r
         self.g = g
         self.b = b
@@ -95,8 +98,8 @@ class ColorStreamSource(ColorStream):
         self.g_gl = g/COLOR_COMPONENT_MAX
         self.b_gl = b/COLOR_COMPONENT_MAX
 
-
-
+class ColorSink(object):
+    pass
 
 def main():
     """ your app starts here
