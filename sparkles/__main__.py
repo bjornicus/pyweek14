@@ -96,7 +96,7 @@ class Grid(object):
             )
 
     def set_selected(self, x, y):
-        self.selected = (x/self.square_size, y/self.square_size)
+        self.selected = Vector2d(x/self.square_size, y/self.square_size)
 class Vector2d(object):
     def __init__(self, x, y):
         super(Vector2d, self).__init__()
