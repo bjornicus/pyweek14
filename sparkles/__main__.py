@@ -13,7 +13,7 @@ class Grid(object):
         self.x_count = width/square_size
         self.y_count = height/square_size
         #print self.x_count, self.y_count
-        self.selected = (10, 20)
+        self.selected = Vector2d(10, 20)
         self.cells = {}
         for x in range(self.x_count):
             for y in range(self.y_count):
@@ -40,9 +40,9 @@ class Grid(object):
 
     def draw_colorsink(self, x, y):
         glColor4f(0.5, 0.5, 0.5, 1)
-        x1 = self.selected[0] * self.square_size
+        x1 = x * self.square_size
         x2 = x1 + self.square_size
-        y1 = self.selected[1] * self.square_size
+        y1 = y * self.square_size
         y2 = y1 + self.square_size
 
         pyglet.graphics.draw(4, pyglet.gl.GL_QUADS,
@@ -73,9 +73,9 @@ class Grid(object):
 
     def draw_selected_square(self):
         glColor4f(1, 0, 0, 0.5)
-        x1 = self.selected[0] * self.square_size
+        x1 = self.selected.x * self.square_size
         x2 = x1 + self.square_size
-        y1 = self.selected[1] * self.square_size
+        y1 = self.selected.y * self.square_size
         y2 = y1 + self.square_size
 
         pyglet.graphics.draw(4, pyglet.gl.GL_QUADS,
