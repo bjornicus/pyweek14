@@ -35,6 +35,21 @@ class Grid(object):
                 for item in self.cells[x,y]:
                     if isinstance(item, ColorStream):
                         self.draw_colorstream(x, y, item)
+                    if isinstance(item, ColorSink):
+                        self.draw_colorsink(x, y)
+
+    def draw_colorsink(self, x, y):
+        glColor4f(0.5, 0.5, 0.5, 1)
+        x1 = self.selected[0] * self.square_size
+        x2 = x1 + self.square_size
+        y1 = self.selected[1] * self.square_size
+        y2 = y1 + self.square_size
+
+        pyglet.graphics.draw(4, pyglet.gl.GL_QUADS,
+                ('v2i', (x1,y1, x1,y2, x2,y2, x2,y1))
+        )
+        glColor4f(1, 1, 1, 1)
+
 
     def draw_colorstream(self, x, y, stream):
         glColor4f(stream.r_gl, stream.g_gl, stream.b_gl, 1)
