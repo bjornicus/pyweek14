@@ -56,13 +56,15 @@ class Grid(object):
         glLineWidth(3)
         x1 = x*self.square_size + self.square_size/2
         y1 = y*self.square_size + self.square_size/2
-        while (x > 0 and x < self.x_count and y > 0 and y < self.y_count):
+        stop = False
+        while (not stop and x > 0 and x < self.x_count and y > 0 and y < self.y_count):
             x += stream.output_direction.x
             y += stream.output_direction.y
             if not self.cells.has_key((x,y)):
                 break
-            if len(self.cells[x,y]) > 0:
-                break
+            for item in self.cells[x,y]:
+                if isinstance(item, ColorSink):
+                    stop = True
         x2 = x*self.square_size + self.square_size/2
         y2 = y*self.square_size + self.square_size/2
         pyglet.graphics.draw(2, pyglet.gl.GL_LINES,
