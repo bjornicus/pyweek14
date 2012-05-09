@@ -16,8 +16,8 @@ class Grid(object):
         for x in range(self.x_count):
             for y in range(self.y_count):
                 self.cells[x,y] = []
-        self.cells[15,5].append(Laser(-1,0, COLOR_COMPONENT_MAX,0,0 ))
-        self.cells[30,1].append(Laser(0,1, 0, 0, COLOR_COMPONENT_MAX/2))
+        self.cells[15,5].append(ColorStream(-1,0, COLOR_COMPONENT_MAX,0,0 ))
+        self.cells[30,1].append(ColorStream(0,1, 0, 0, COLOR_COMPONENT_MAX/2))
 
     def draw(self):
         self.draw_gridlines()
@@ -28,8 +28,23 @@ class Grid(object):
         for x in range(self.x_count):
             for y in range(self.y_count):
                 for item in self.cells[x,y]:
-                    item.draw(x*self.square_size, y*self.square_size, self.square_size)
+                    self.draw_colorstream(x, y, item)
 
+    def draw_colorstream(self, x, y, stream):
+        glColor4f(stream.r_gl, stream.g_gl, stream.b_gl, 1)
+        glLineWidth(3)
+        x1 = x*self.square_size + self.square_size/2
+        y1 = y*self.square_size + self.square_size/2
+        while (x > 0 and x < self.x_count and y > 0 and y < self.y_count):
+            x += stream.output_direction.x
+            y += stream.output_direction.y
+        x2 = x*self.square_size + self.square_size/2
+        y2 = y*self.square_size + self.square_size/2
+        pyglet.graphics.draw(2, pyglet.gl.GL_LINES,
+                ('v2i', (x1,y1, x2,y2,))
+        )
+        glColor4f(1, 1, 1, 1)
+        glLineWidth(1)
 
     def draw_selected_square(self):
         glColor4f(1, 0, 0, 0.5)
@@ -57,11 +72,21 @@ class Grid(object):
 
     def set_selected(self, x, y):
         self.selected = (x/self.square_size, y/self.square_size)
+class Vector2d(object):
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
 
-
-class Laser(object):
-    def __init__(self, x_direction, y_direction, r, g, b):
-        self.direction = (x_direction, y_direction)
+class Source(object):
+    def __init__(self, x_out, y_out):
+        self.output_direction = Vector2d(x_out, y_out)
+        self.r = 0
+        self.g = 0
+        self.b = 0
+    
+class ColorStream(Source):
+    def __init__(self, x_out, y_out, r, g, b):
+        Source.__init__(self, x_out, y_out)
         self.r = r
         self.g = g
         self.b = b
@@ -69,19 +94,6 @@ class Laser(object):
         self.g_gl = g/COLOR_COMPONENT_MAX
         self.b_gl = b/COLOR_COMPONENT_MAX
 
-    def draw(self, x, y, size):
-        glColor4f(self.r_gl, self.g_gl, self.b_gl, 1)
-        glLineWidth(3)
-        x1 = x + size/2
-        x2 = x1 + self.direction[0] * 100
-        y1 = y + size/2
-        y2 = y1 + self.direction[1] * 100
-
-        pyglet.graphics.draw(2, pyglet.gl.GL_LINES,
-                ('v2i', (x1,y1, x2,y2,))
-        )
-        glColor4f(1, 1, 1, 1)
-        glLineWidth(1)
 
 
 
