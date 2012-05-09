@@ -16,8 +16,8 @@ class Grid(object):
         for x in range(self.x_count):
             for y in range(self.y_count):
                 self.cells[x,y] = []
-        self.cells[15,5].append(ColorStream(-1,0, COLOR_COMPONENT_MAX,0,0 ))
-        self.cells[30,1].append(ColorStream(0,1, 0, 0, COLOR_COMPONENT_MAX/2))
+        self.cells[15,5].append(ColorStreamSource(-1,0, COLOR_COMPONENT_MAX,0,0 ))
+        self.cells[30,1].append(ColorStreamSource(0,1, 0, 0, COLOR_COMPONENT_MAX/2))
 
     def draw(self):
         self.draw_gridlines()
@@ -28,7 +28,8 @@ class Grid(object):
         for x in range(self.x_count):
             for y in range(self.y_count):
                 for item in self.cells[x,y]:
-                    self.draw_colorstream(x, y, item)
+                    if isinstance(item, ColorStream):
+                        self.draw_colorstream(x, y, item)
 
     def draw_colorstream(self, x, y, stream):
         glColor4f(stream.r_gl, stream.g_gl, stream.b_gl, 1)
@@ -77,16 +78,16 @@ class Vector2d(object):
         self.x = x
         self.y = y
 
-class Source(object):
+class ColorStream(object):
     def __init__(self, x_out, y_out):
         self.output_direction = Vector2d(x_out, y_out)
         self.r = 0
         self.g = 0
         self.b = 0
     
-class ColorStream(Source):
+class ColorStreamSource(ColorStream):
     def __init__(self, x_out, y_out, r, g, b):
-        Source.__init__(self, x_out, y_out)
+        ColorStream.__init__(self, x_out, y_out)
         self.r = r
         self.g = g
         self.b = b
