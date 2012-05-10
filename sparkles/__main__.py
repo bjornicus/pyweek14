@@ -34,7 +34,7 @@ class Grid(object):
             for y in range(self.y_count):
                 for item in self.cells[x,y]:
                     if isinstance(item, ColorStream):
-                        self.draw_colorstream(x, y, item)
+                        self.update_colorstream(x, y, item)
                     if isinstance(item, ColorSink):
                         self.draw_colorsink(x, y)
 
@@ -50,8 +50,7 @@ class Grid(object):
         )
         glColor4f(1, 1, 1, 1)
 
-
-    def draw_colorstream(self, x, y, stream):
+    def update_colorstream(self, x, y, stream):
         x1 = x*self.square_size + self.square_size/2
         y1 = y*self.square_size + self.square_size/2
         stop = False
@@ -65,18 +64,9 @@ class Grid(object):
                     stop = True
         x2 = x*self.square_size + self.square_size/2
         y2 = y*self.square_size + self.square_size/2
-
-        for i in range(1,4): 
-            width = i*2
-            alpha = 1-(i)/10.0
-            glColor4f(stream.r_gl, stream.g_gl, stream.b_gl, alpha)
-            glLineWidth(width)
-            pyglet.graphics.draw(2, pyglet.gl.GL_LINES,
-                    ('v2i', (x1,y1, x2,y2,))
-            )
-
-        glLineWidth(1)
-        glColor4f(1, 1, 1, 1)
+        stream.origin = Vector2d(x1,y1)
+        stream.end = Vector2d(x2,y2)
+        stream.draw()
 
     def draw_selected_square(self):
         glColor4f(1, 0, 0, 0.5)
@@ -117,6 +107,30 @@ class ColorStream(object):
         self.r = 0
         self.g = 0
         self.b = 0
+        self.r_gl = 0
+        self.g_gl = 0
+        self.b_gl = 0
+        self.origin = Vector2d(0,0)
+        self.end = Vector2d(0,0)
+
+    def update_gl_colors(self):
+        self.r_gl = r/COLOR_COMPONENT_MAX
+        self.g_gl = g/COLOR_COMPONENT_MAX
+        self.b_gl = b/COLOR_COMPONENT_MAX
+
+    def draw(self):
+        for i in range(1,4): 
+            width = i*2
+            alpha = 1-(i)/10.0
+            glColor4f(self.r_gl, self.g_gl, self.b_gl, alpha)
+            glLineWidth(width)
+            pyglet.graphics.draw(2, pyglet.gl.GL_LINES,
+                    ('v2i', (self.origin.x, self.origin.y, self.end.x, self.end.y))
+            )
+
+        glLineWidth(1)
+        glColor4f(1, 1, 1, 1)
+
     
 class ColorStreamSource(ColorStream):
     def __init__(self, x_out, y_out, r, g, b):
