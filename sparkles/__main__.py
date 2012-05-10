@@ -67,11 +67,16 @@ class Grid(object):
                     ('v2i', (0, y, self.width, y))
             )
 
-    def set_selected(self, x, y):
+    def handle_left_click(self, x, y):
         square = Vector2d(x/SQUARE_SIZE, y/SQUARE_SIZE)
         square_location = Vector2d(square.x*SQUARE_SIZE, square.y*SQUARE_SIZE)
         sink = ColorSink(square_location)
         self.cells[square.x, square.y].append(sink)
+        self.update()
+
+    def handle_right_click(self, x, y):
+        square = Vector2d(x/SQUARE_SIZE, y/SQUARE_SIZE)
+        self.cells[square.x, square.y] = []
         self.update()
 
 class Vector2d(object):
@@ -165,7 +170,9 @@ def main():
     @window.event
     def on_mouse_press(x, y, button, modifiers):
         if button == mouse.LEFT:
-            grid.set_selected(x,y)
+            grid.handle_left_click(x,y)
+        if button == mouse.RIGHT:
+            grid.handle_right_click(x,y)
 
     pyglet.app.run()
 
