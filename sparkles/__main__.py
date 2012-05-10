@@ -15,28 +15,29 @@ class Grid(object):
         self.cells = {}
         for x in range(self.x_count):
             for y in range(self.y_count):
-                self.cells[x,y] = []
-        self.cells[15,5].append(ColorStreamSource(-1,0, COLOR_COMPONENT_MAX,0,0 ))
-        self.cells[30,1].append(ColorStreamSource(0,1, 0, 0, COLOR_COMPONENT_MAX))
-        self.cells[5,15].append(ColorStreamSource(1,0, 0, COLOR_COMPONENT_MAX,0 ))
-        self.cells[2,20].append(ColorStreamSource(0,-1, 0, COLOR_COMPONENT_MAX, COLOR_COMPONENT_MAX))
+                self.cells[x,y] = None
+        self.cells[15,5] = ColorStreamSource(-1,0, COLOR_COMPONENT_MAX,0,0 )
+        self.cells[30,1] = ColorStreamSource(0,1, 0, 0, COLOR_COMPONENT_MAX)
+        self.cells[5,15] = ColorStreamSource(1,0, 0, COLOR_COMPONENT_MAX,0 )
+        self.cells[2,20] = ColorStreamSource(0,-1, 0, COLOR_COMPONENT_MAX, COLOR_COMPONENT_MAX)
         self.update()
 
     def update(self):
-        for (coords, cell) in self.cells.iteritems():
-            for item in cell:
-                if isinstance(item, ColorStream):
-                    self.update_colorstream(coords[0], coords[1], item)
+        for (coords, item) in self.cells.iteritems():
+            if isinstance(item, ColorStream):
+                self.update_colorstream(coords[0], coords[1], item)
 
     def draw(self):
         self.draw_gridlines()
         self.draw_cells()
 
     def draw_cells(self):
-        for x in range(self.x_count):
-            for y in range(self.y_count):
-                for item in self.cells[x,y]:
-                    item.draw()
+        f = lambda x: isinstance(x, ColorStream)
+        for stream in filter(f, self.cells.itervalues()):
+            stream.draw()
+        f = lambda x: isinstance(x, ColorSink)
+        for stream in filter(f, self.cells.itervalues()):
+            stream.draw()
 
     def update_colorstream(self, x, y, stream):
         x1 = x*SQUARE_SIZE + SQUARE_SIZE/2
@@ -47,9 +48,9 @@ class Grid(object):
             y += stream.output_direction.y
             if not self.cells.has_key((x,y)):
                 break
-            for item in self.cells[x,y]:
-                if isinstance(item, ColorSink):
-                    stop = True
+            item = self.cells[x,y]
+            if isinstance(item, ColorSink):
+                stop = True
         x2 = x*SQUARE_SIZE + SQUARE_SIZE/2
         y2 = y*SQUARE_SIZE + SQUARE_SIZE/2
         stream.origin = Vector2d(x1,y1)
@@ -71,12 +72,12 @@ class Grid(object):
         square = Vector2d(x/SQUARE_SIZE, y/SQUARE_SIZE)
         square_location = Vector2d(square.x*SQUARE_SIZE, square.y*SQUARE_SIZE)
         sink = ColorSink(square_location)
-        self.cells[square.x, square.y].append(sink)
+        self.cells[square.x, square.y] = sink
         self.update()
 
     def handle_right_click(self, x, y):
         square = Vector2d(x/SQUARE_SIZE, y/SQUARE_SIZE)
-        self.cells[square.x, square.y] = []
+        self.cells[square.x, square.y] = None
         self.update()
 
 class Vector2d(object):
