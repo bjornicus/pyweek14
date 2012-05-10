@@ -52,8 +52,6 @@ class Grid(object):
 
 
     def draw_colorstream(self, x, y, stream):
-        glColor4f(stream.r_gl, stream.g_gl, stream.b_gl, 1)
-        glLineWidth(3)
         x1 = x*self.square_size + self.square_size/2
         y1 = y*self.square_size + self.square_size/2
         stop = False
@@ -67,11 +65,18 @@ class Grid(object):
                     stop = True
         x2 = x*self.square_size + self.square_size/2
         y2 = y*self.square_size + self.square_size/2
-        pyglet.graphics.draw(2, pyglet.gl.GL_LINES,
-                ('v2i', (x1,y1, x2,y2,))
-        )
-        glColor4f(1, 1, 1, 1)
+
+        for i in range(1,4): 
+            width = i*2
+            alpha = 1-(i)/10.0
+            glColor4f(stream.r_gl, stream.g_gl, stream.b_gl, alpha)
+            glLineWidth(width)
+            pyglet.graphics.draw(2, pyglet.gl.GL_LINES,
+                    ('v2i', (x1,y1, x2,y2,))
+            )
+
         glLineWidth(1)
+        glColor4f(1, 1, 1, 1)
 
     def draw_selected_square(self):
         glColor4f(1, 0, 0, 0.5)
@@ -86,7 +91,7 @@ class Grid(object):
         glColor4f(1, 1, 1, 1)
 
     def draw_gridlines(self):
-        glColor4f(0.3, 0.3, 0.3, 5)
+        glColor4f(0.1, 0.1, 0.1, 0.5)
         for x in range(0, self.width, self.square_size):
             pyglet.graphics.draw(2, pyglet.gl.GL_LINES,
                     ('v2i', (x, 0, x, self.height))
@@ -138,6 +143,9 @@ def main():
                           anchor_x='center', anchor_y='center')
 
     grid = Grid(window.width, window.height, 20)
+    glEnable(GL_BLEND)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+    glClearColor(0.0, 0.0, 0.0, 1.0)
 
     @window.event
     def on_draw():
