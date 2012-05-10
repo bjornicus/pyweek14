@@ -22,11 +22,6 @@ class Grid(object):
         self.cells[2,20] = ColorStreamSource(0,-1, 0, COLOR_COMPONENT_MAX, COLOR_COMPONENT_MAX)
         self.update()
 
-    def update(self):
-        for (coords, item) in self.cells.iteritems():
-            if isinstance(item, ColorStream):
-                self.update_colorstream(coords[0], coords[1], item)
-
     def draw(self):
         self.draw_gridlines()
         self.draw_cells()
@@ -39,6 +34,11 @@ class Grid(object):
         for stream in filter(f, self.cells.itervalues()):
             stream.draw()
 
+    def update(self):
+        for (coords, item) in self.cells.iteritems():
+            if isinstance(item, ColorStream):
+                self.update_colorstream(coords[0], coords[1], item)
+
     def update_colorstream(self, x, y, stream):
         x1 = x*SQUARE_SIZE + SQUARE_SIZE/2
         y1 = y*SQUARE_SIZE + SQUARE_SIZE/2
@@ -50,6 +50,7 @@ class Grid(object):
                 break
             item = self.cells[x,y]
             if isinstance(item, ColorSink):
+                item.add_source(stream)
                 stop = True
         x2 = x*SQUARE_SIZE + SQUARE_SIZE/2
         y2 = y*SQUARE_SIZE + SQUARE_SIZE/2
@@ -93,22 +94,23 @@ class ColorStream(object):
         self.r = 0
         self.g = 0
         self.b = 0
-        self.r_gl = 0
-        self.g_gl = 0
-        self.b_gl = 0
+        self.color = (0, 0, 0 )
         self.origin = Vector2d(0,0)
         self.end = Vector2d(0,0)
 
-    def update_gl_colors(self):
-        self.r_gl = r/COLOR_COMPONENT_MAX
-        self.g_gl = g/COLOR_COMPONENT_MAX
-        self.b_gl = b/COLOR_COMPONENT_MAX
+    def update_gl_color(self):
+        self.color = (
+                self.r/COLOR_COMPONENT_MAX, 
+                self.g/COLOR_COMPONENT_MAX, 
+                self.b/COLOR_COMPONENT_MAX
+                )
 
     def draw(self):
         for i in range(1,4): 
             width = i*2
             alpha = 1-(i)/10.0
-            glColor4f(self.r_gl, self.g_gl, self.b_gl, alpha)
+            color = self.color + (alpha,)
+            glColor4f(*color)
             glLineWidth(width)
             pyglet.graphics.draw(2, pyglet.gl.GL_LINES,
                     ('v2i', (self.origin.x, self.origin.y, self.end.x, self.end.y))
@@ -124,17 +126,16 @@ class ColorStreamSource(ColorStream):
         self.r = r
         self.g = g
         self.b = b
-        self.r_gl = r/COLOR_COMPONENT_MAX
-        self.g_gl = g/COLOR_COMPONENT_MAX
-        self.b_gl = b/COLOR_COMPONENT_MAX
+        self.update_gl_color()
 
 class ColorSink(object):
     def __init__(self, location):
         super(ColorSink, self).__init__()
         self.location = location
+        self.color = (0.5, 0.5, 0.5, 1)
 
     def draw(self):
-        glColor4f(0.5, 0.5, 0.5, 1)
+        glColor4f(*self.color)
         x1 = self.location.x
         x2 = x1 + SQUARE_SIZE
         y1 = self.location.y
@@ -144,6 +145,9 @@ class ColorSink(object):
                 ('v2i', (x1,y1, x1,y2, x2,y2, x2,y1))
         )
         glColor4f(1, 1, 1, 1)
+
+    def add_source(self, source):
+        self.color = (source.r, source.g, source.b, 1.0)
 
 
 def main():
