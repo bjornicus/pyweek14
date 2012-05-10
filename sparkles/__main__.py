@@ -35,6 +35,10 @@ class Grid(object):
             stream.draw()
 
     def update(self):
+        f = lambda x: isinstance(x, ColorSink)
+        for sink in filter(f, self.cells.itervalues()):
+            sink.sources = []
+            sink.update()
         for (coords, item) in self.cells.iteritems():
             if isinstance(item, ColorStream):
                 self.update_colorstream(coords[0], coords[1], item)
@@ -72,7 +76,7 @@ class Grid(object):
     def handle_left_click(self, x, y):
         square = Vector2d(x/SQUARE_SIZE, y/SQUARE_SIZE)
         square_location = Vector2d(square.x*SQUARE_SIZE, square.y*SQUARE_SIZE)
-        sink = ColorSink(square_location)
+        sink = ColorCollector(square_location)
         self.cells[square.x, square.y] = sink
         self.update()
 
@@ -133,6 +137,7 @@ class ColorSink(object):
         super(ColorSink, self).__init__()
         self.location = location
         self.color = (0.5, 0.5, 0.5, 1)
+        self.sources = []
 
     def draw(self):
         glColor4f(*self.color)
@@ -146,8 +151,30 @@ class ColorSink(object):
         )
         glColor4f(1, 1, 1, 1)
 
+    def update(self):
+        pass
+
     def add_source(self, source):
-        self.color = (source.r, source.g, source.b, 1.0)
+        pass
+
+class ColorCollector(ColorSink):
+    def __init__(self, location):
+        super(ColorCollector, self).__init__(location)
+
+    def add_source(self, source):
+        if not source in self.sources:
+            self.sources.append(source)
+        self.update()
+
+    def update(self):
+        r = 0.1
+        g = 0.1
+        b = 0.1
+        for source in self.sources:
+            r += source.r
+            g += source.g
+            b += source.b
+        self.color = (r, g, b, 1.0)
 
 
 def main():
