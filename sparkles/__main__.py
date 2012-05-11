@@ -78,7 +78,8 @@ class Grid(object):
     def handle_left_click(self, x, y):
         square = Vector2d(x/SQUARE_SIZE, y/SQUARE_SIZE)
         square_location = Vector2d(square.x*SQUARE_SIZE, square.y*SQUARE_SIZE)
-        self.cells[square.x, square.y] = self.generator(square_location)
+        if self.cells[square.x, square.y] is None:
+            self.cells[square.x, square.y] = self.generator(square_location)
         self.update()
 
     def handle_right_click(self, x, y):
