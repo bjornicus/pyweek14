@@ -93,9 +93,9 @@ class Vector2d(object):
         self.y = y
 
 class ColorStream(object):
-    def __init__(self, x_out, y_out):
+    def __init__(self):
         super(ColorStream, self).__init__()
-        self.output_direction = Vector2d(x_out, y_out)
+        self.output_direction = None
         self.r = 0
         self.g = 0
         self.b = 0
@@ -127,7 +127,8 @@ class ColorStream(object):
     
 class ColorStreamSource(ColorStream):
     def __init__(self, x_out, y_out, r, g, b):
-        super(ColorStreamSource, self).__init__(x_out, y_out)
+        super(ColorStreamSource, self).__init__()
+        self.output_direction = Vector2d(x_out, y_out)
         self.r = r
         self.g = g
         self.b = b
@@ -177,6 +178,9 @@ class ColorCollector(ColorSink):
             b += source.b
         self.color = (r, g, b, 1.0)
 
+class Attenuator(ColorSink, ColorStream):
+    def __init__(self, location):
+        pass
 
 def main():
     """ your app starts here
