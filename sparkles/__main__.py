@@ -46,23 +46,33 @@ class Grid(object):
             if isinstance(item, ColorStream):
                 self.update_colorstream(coords[0], coords[1], item)
 
-    def update_colorstream(self, x, y, stream):
-        x1 = x*SQUARE_SIZE + SQUARE_SIZE/2
-        y1 = y*SQUARE_SIZE + SQUARE_SIZE/2
-        stop = False
-        while (not stop and x > 0 and x < self.x_count and y > 0 and y < self.y_count):
-            if stream.output_direction is None:
-                break
-            x += stream.output_direction.x
-            y += stream.output_direction.y
+    def find_next_sink(self, x, y, direction):
+        item = None
+        
+        if direction is None:
+            return Vector2d(x,y), item
+
+        while (x > 0 and x < self.x_count and y > 0 and y < self.y_count):
+            x += direction.x
+            y += direction.y
             if not self.cells.has_key((x,y)):
+                item = None
                 break
             item = self.cells[x,y]
             if isinstance(item, ColorSink):
-                item.add_source(stream)
-                stop = True
-        x2 = x*SQUARE_SIZE + SQUARE_SIZE/2
-        y2 = y*SQUARE_SIZE + SQUARE_SIZE/2
+                break
+
+        return Vector2d(x,y), item
+
+
+    def update_colorstream(self, x, y, stream):
+        x1 = x*SQUARE_SIZE + SQUARE_SIZE/2
+        y1 = y*SQUARE_SIZE + SQUARE_SIZE/2
+        location, sink = self.find_next_sink(x, y, stream.output_direction)
+        if sink is not None:
+            sink.add_source(stream)
+        x2 = location.x*SQUARE_SIZE + SQUARE_SIZE/2
+        y2 = location.y*SQUARE_SIZE + SQUARE_SIZE/2
         stream.origin = Vector2d(x1,y1)
         stream.end = Vector2d(x2,y2)
 
@@ -82,7 +92,6 @@ class Grid(object):
         square = Vector2d(x/SQUARE_SIZE, y/SQUARE_SIZE)
         square_location = Vector2d(square.x*SQUARE_SIZE, square.y*SQUARE_SIZE)
         if self.cells[square.x, square.y] is None:
-            print "adding"
             self.cells[square.x, square.y] = self.generator(square_location)
         self.update()
 
@@ -117,8 +126,6 @@ class ColorStream(object):
                 )
 
     def draw_stream(self):
-        if isinstance(self, Attenuator):
-            print self.end.x, self.end.y
         for i in range(1,4): 
             width = i*2
             alpha = 1-(i)/10.0
