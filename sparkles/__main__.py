@@ -22,6 +22,7 @@ class Grid(object):
         self.cells[30,1] = ColorStreamSource(0,1, 0, 0, COLOR_COMPONENT_MAX)
         self.cells[5,15] = ColorStreamSource(1,0, 0, COLOR_COMPONENT_MAX,0 )
         self.cells[2,20] = ColorStreamSource(0,-1, 0, COLOR_COMPONENT_MAX, COLOR_COMPONENT_MAX)
+        self.cells[31,8] = ColorStreamSource(-1,0, 0, 0, COLOR_COMPONENT_MAX)
         self.update()
 
     def draw(self):
@@ -31,15 +32,15 @@ class Grid(object):
     def draw_cells(self):
         f = lambda x: isinstance(x, ColorStream)
         for stream in filter(f, self.cells.itervalues()):
-            stream.draw()
+            stream.draw_stream()
         f = lambda x: isinstance(x, ColorSink)
-        for stream in filter(f, self.cells.itervalues()):
-            stream.draw()
+        for sink in filter(f, self.cells.itervalues()):
+            sink.draw_sink()
 
     def update(self):
         f = lambda x: isinstance(x, ColorSink)
         for sink in filter(f, self.cells.itervalues()):
-            sink.sources = []
+            sink.reset_sources()
             sink.update()
         for (coords, item) in self.cells.iteritems():
             if isinstance(item, ColorStream):
@@ -50,6 +51,8 @@ class Grid(object):
         y1 = y*SQUARE_SIZE + SQUARE_SIZE/2
         stop = False
         while (not stop and x > 0 and x < self.x_count and y > 0 and y < self.y_count):
+            if stream.output_direction is None:
+                break
             x += stream.output_direction.x
             y += stream.output_direction.y
             if not self.cells.has_key((x,y)):
@@ -79,6 +82,7 @@ class Grid(object):
         square = Vector2d(x/SQUARE_SIZE, y/SQUARE_SIZE)
         square_location = Vector2d(square.x*SQUARE_SIZE, square.y*SQUARE_SIZE)
         if self.cells[square.x, square.y] is None:
+            print "adding"
             self.cells[square.x, square.y] = self.generator(square_location)
         self.update()
 
@@ -100,7 +104,7 @@ class ColorStream(object):
         self.r = 0
         self.g = 0
         self.b = 0
-        self.color = (0, 0, 0 )
+        self.color = (0, 0, 0, 1)
         self.origin = Vector2d(0,0)
         self.end = Vector2d(0,0)
 
@@ -108,14 +112,17 @@ class ColorStream(object):
         self.color = (
                 self.r/COLOR_COMPONENT_MAX, 
                 self.g/COLOR_COMPONENT_MAX, 
-                self.b/COLOR_COMPONENT_MAX
+                self.b/COLOR_COMPONENT_MAX,
+                1
                 )
 
-    def draw(self):
+    def draw_stream(self):
+        if isinstance(self, Attenuator):
+            print self.end.x, self.end.y
         for i in range(1,4): 
             width = i*2
             alpha = 1-(i)/10.0
-            color = self.color + (alpha,)
+            color = self.color[:3] + (alpha,)
             glColor4f(*color)
             glLineWidth(width)
             pyglet.graphics.draw(2, pyglet.gl.GL_LINES,
@@ -140,9 +147,9 @@ class ColorSink(object):
         super(ColorSink, self).__init__()
         self.location = location
         self.color = (0.5, 0.5, 0.5, 1)
-        self.sources = []
+        self.sources = None
 
-    def draw(self):
+    def draw_sink(self):
         glColor4f(*self.color)
         x1 = self.location.x
         x2 = x1 + SQUARE_SIZE
@@ -160,14 +167,21 @@ class ColorSink(object):
     def add_source(self, source):
         pass
 
+    def reset_sources(self):
+        self.sources = None
+
 class ColorCollector(ColorSink):
     def __init__(self, location):
         super(ColorCollector, self).__init__(location)
+        self.sources = []
 
     def add_source(self, source):
         if not source in self.sources:
             self.sources.append(source)
         self.update()
+
+    def reset_sources(self):
+        self.sources = []
 
     def update(self):
         r = 0.1
@@ -181,7 +195,16 @@ class ColorCollector(ColorSink):
 
 class Attenuator(ColorSink, ColorStream):
     def __init__(self, location):
-        pass
+        super(Attenuator, self).__init__(location)
+
+    def add_source(self, source):
+        if self.sources is None:
+            self.sources = source
+            self.output_direction = source.output_direction
+            self.r = source.r / 2
+            self.g = source.g / 2
+            self.b = source.b / 2
+            self.update_gl_color()
 
 def main():
     """ your app starts here
@@ -218,6 +241,8 @@ def main():
             grid.generator = lambda location: ColorStreamSource(0,1, COLOR_COMPONENT_MAX, 0, COLOR_COMPONENT_MAX)
         elif symbol == key.C:
             grid.generator = lambda location: ColorCollector(location)
+        elif symbol == key.A:
+            grid.generator = lambda location: Attenuator(location)
 
     pyglet.app.run()
 
