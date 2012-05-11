@@ -1,6 +1,7 @@
 import pyglet
 from pyglet.gl import *
 from pyglet.window import mouse
+from pyglet.window import key
 
 COLOR_COMPONENT_MAX = 16.0
 SQUARE_SIZE = 20
@@ -16,6 +17,7 @@ class Grid(object):
         for x in range(self.x_count):
             for y in range(self.y_count):
                 self.cells[x,y] = None
+        self.generator = lambda location: None
         self.cells[15,5] = ColorStreamSource(-1,0, COLOR_COMPONENT_MAX,0,0 )
         self.cells[30,1] = ColorStreamSource(0,1, 0, 0, COLOR_COMPONENT_MAX)
         self.cells[5,15] = ColorStreamSource(1,0, 0, COLOR_COMPONENT_MAX,0 )
@@ -76,8 +78,7 @@ class Grid(object):
     def handle_left_click(self, x, y):
         square = Vector2d(x/SQUARE_SIZE, y/SQUARE_SIZE)
         square_location = Vector2d(square.x*SQUARE_SIZE, square.y*SQUARE_SIZE)
-        sink = ColorCollector(square_location)
-        self.cells[square.x, square.y] = sink
+        self.cells[square.x, square.y] = self.generator(square_location)
         self.update()
 
     def handle_right_click(self, x, y):
@@ -205,6 +206,13 @@ def main():
             grid.handle_left_click(x,y)
         if button == mouse.RIGHT:
             grid.handle_right_click(x,y)
+
+    @window.event
+    def on_key_press(symbol, modifiers):
+        if symbol == key.S:
+            grid.generator = lambda location: ColorStreamSource(0,1, COLOR_COMPONENT_MAX, 0, COLOR_COMPONENT_MAX)
+        elif symbol == key.C:
+            grid.generator = lambda location: ColorCollector(location)
 
     pyglet.app.run()
 
