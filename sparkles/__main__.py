@@ -84,7 +84,7 @@ def update_things():
         while next_sink is not None:
             visitcount += 1
             if visitcount > len(things):
-                raise Exception("ABORT!")
+                raise AbortException("ABORT!")
             next_sink.visited
             source.set_sink(next_sink)
             next_sink.add_source(source)
@@ -270,6 +270,9 @@ def load_level():
             Color(0, 0, COLOR_COMPONENT_MAX)
             ))
 
+class AbortException(Exception):
+    pass
+
 def main():
     """ your app starts here
     """
@@ -303,8 +306,10 @@ def main():
             if len(selected_things) == 0:
                 new_thing = thing_generator(x,y)
                 things.append(new_thing)
+                rollback = lambda : things.remove(new_thing)
             elif isinstance(selected_things[0], ColorStream):
                 selected_things[0].rotate()
+                rollback = lambda : selected_things[0].rotate()
 
         if button == mouse.RIGHT:
             f = lambda t: t.x == x and t.y == y
@@ -312,7 +317,11 @@ def main():
             for thing in selected_things:
                 things.remove(thing)
 
-        update_things()
+        try:
+            update_things()
+        except AbortException:
+            rollback()
+            update_things()
 
     @window.event
     def on_key_press(symbol, modifiers):
