@@ -228,9 +228,9 @@ def main():
 
     @window.event
     def on_mouse_press(x, y, button, modifiers):
+        x = x - x%SQUARE_SIZE
+        y = y - y%SQUARE_SIZE
         if button == mouse.LEFT:
-            x = x - x%SQUARE_SIZE
-            y = y - y%SQUARE_SIZE
             f = lambda t: t.x == x and t.y == y
             selected_things = filter(f, things)
             if len(selected_things) == 0:
