@@ -35,11 +35,11 @@ def find_next_sink(x, y, direction):
     def xmin(thing1, thing2):
         if abs(x - thing1.x) < abs(x - thing2.x):
             return thing1
-        return thnig2
+        return thing2
     def ymin(thing1, thing2):
         if abs(y - thing1.y) < abs(y - thing2.y):
             return thing1
-        return thnig2
+        return thing2
 
     reduce_function = xmin
     if direction.x == 1:
@@ -65,8 +65,9 @@ def update_things():
         
     # follow the graph from each of the color sources to its eventual terminating sink
     # and connect each source to the next sink
-    for source in filter(lambda x: x is ColorStreamSource, things):
+    for source in filter(lambda x: isinstance(x, ColorStreamSource), things):
         next_sink = find_next_sink(source.x, source.y, source.output_direction)
+        print next_sink
         while next_sink is not None:
             source.set_sink(next_sink)
             next_sink.add_source(source)
@@ -150,7 +151,7 @@ class ColorSink(Thing):
         self.sources = None
 
     def draw_sink(self):
-        glColor4f(*self.color)
+        glColor4f(*self.glcolor)
         x1 = self.x
         x2 = x1 + SQUARE_SIZE
         y1 = self.y
@@ -176,6 +177,7 @@ class ColorCollector(ColorSink):
         self.sources = []
 
     def add_source(self, source):
+        print "a - add"
         if not source in self.sources:
             self.sources.append(source)
         self.update()
@@ -202,10 +204,26 @@ class Attenuator(ColorSink, ColorStream):
         if self.sources is None:
             self.sources = source
             self.output_direction = source.output_direction
-            self.r = source.r / 2
-            self.g = source.g / 2
-            self.b = source.b / 2
+            c = source.color
+            self.color = Color(c.r/2, c.g/2, c.b/2)
             self.update_gl_color()
+
+def load_level():
+    things.append(ColorStreamSource(
+            20, 140, 
+            Vector2d(1,0), 
+            Color(COLOR_COMPONENT_MAX, 0, 0)
+            ))
+    things.append(ColorStreamSource(
+            120, 40, 
+            Vector2d(0,1), 
+            Color(0,0,COLOR_COMPONENT_MAX)
+            ))
+    things.append(ColorStreamSource(
+            220, 240, 
+            Vector2d(-1,0), 
+            Color(COLOR_COMPONENT_MAX, COLOR_COMPONENT_MAX, COLOR_COMPONENT_MAX)
+            ))
 
 def main():
     """ your app starts here
@@ -219,6 +237,9 @@ def main():
     glClearColor(0.0, 0.0, 0.0, 1.0)
     
     thing_generator = lambda x, y: Attenuator(x, y)
+
+    load_level()
+    update_things()
 
     @window.event
     def on_draw():
