@@ -6,6 +6,17 @@ from pyglet.window import key
 COLOR_COMPONENT_MAX = 16.0
 SQUARE_SIZE = 20
 
+class Vector2d(object):
+    def __init__(self, x, y):
+        super(Vector2d, self).__init__()
+        self.x = x
+        self.y = y
+
+UP = Vector2d(0,1)
+DOWN = Vector2d(0,-1)
+LEFT = Vector2d(-1,0)
+RIGHT = Vector2d(1,0)
+
 things = []
 window = None
 thing_generator = None
@@ -74,15 +85,13 @@ def update_things():
             next_sink.add_source(source)
             if isinstance(next_sink, ColorStream):
                 source = next_sink
-                next_sink = find_next_sink(source.x, source.y, source.output_direction)
+                if source.active:
+                    next_sink = find_next_sink(source.x, source.y, source.output_direction)
+                else:
+                    next_sink = None
             else:
                 next_sink = None            
     
-class Vector2d(object):
-    def __init__(self, x, y):
-        super(Vector2d, self).__init__()
-        self.x = x
-        self.y = y
 
 class Color(object):
     def __init__(self, r, g, b):
@@ -100,10 +109,11 @@ class Thing(object):
 class ColorStream(Thing):
     def __init__(self, x, y):
         super(ColorStream, self).__init__(x, y)
-        self.output_direction = Vector2d(0,0)
+        self.output_direction = UP
         self.color = Color(0, 0, 0)
         self.glcolor = (0, 0, 0, 1)
         self.sink = None
+        self.active = False
 
     def clear_sink(self):
         self.sink = None        
@@ -120,6 +130,8 @@ class ColorStream(Thing):
                 )
 
     def draw_stream(self):
+        if not self.active:
+            return
         offset = SQUARE_SIZE/2
         x1 = self.x+offset
         y1 = self.y+offset
@@ -147,12 +159,13 @@ class ColorStreamSource(ColorStream):
         self.output_direction = output_direction
         self.color = color
         self.update_gl_color()
+        self.active = True
 
 class ColorSink(Thing):
     def __init__(self, x, y):
         super(ColorSink, self).__init__(x, y)
         self.glcolor = (0.5, 0.5, 0.5, 1)
-        self.sources = None
+        self.sources = []
 
     def draw_sink(self):
         glColor4f(*self.glcolor)
@@ -173,7 +186,7 @@ class ColorSink(Thing):
         pass
 
     def reset_sources(self):
-        self.sources = None
+        self.sources = []
 
 class Wall(ColorSink):
     def __init__(self, x, y):
@@ -184,31 +197,39 @@ class Wigit(ColorSink, ColorStream):
         super(Wigit, self).__init__(x, y)
 
     def add_source(self, source):
-        if self.sources is None:
-            self.sources = source
+        self.active = True
+        if source not in self.sources:
+            self.sources.append(source)
+            self.update_output()
+
+    def update_output(self):
+        count = len(self.sources)
+        if count == 1:
+            source = self.sources[0]
             self.output_direction = source.output_direction
             c = source.color
             self.color = Color(c.r/2, c.g/2, c.b/2)
             self.update_gl_color()
+        else:
+            x
 
     def reset_sources(self):
         super(Wigit, self).reset_sources()
-        self.output_direction = Vector2d(0,0)
 
 def load_level():
     things.append(ColorStreamSource(
             20, 140, 
-            Vector2d(1,0), 
+            RIGHT,
             Color(COLOR_COMPONENT_MAX, 0, 0)
             ))
     things.append(ColorStreamSource(
             120, 40, 
-            Vector2d(0,1), 
+            UP,
             Color(0,0,COLOR_COMPONENT_MAX)
             ))
     things.append(ColorStreamSource(
             220, 240, 
-            Vector2d(-1,0), 
+            LEFT,
             Color(COLOR_COMPONENT_MAX, COLOR_COMPONENT_MAX, COLOR_COMPONENT_MAX)
             ))
 
