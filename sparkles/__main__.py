@@ -21,6 +21,7 @@ RIGHT = Vector2d(1,0)
 things = []
 window = None
 thing_generator = None
+label = None
 
 
 def draw_gridlines(width, height):
@@ -240,13 +241,13 @@ class ColorSink(Thing):
         self.glborder_color = (1,1,1, 0.5)
 
 class Target(ColorSink):
-    def __init__(self, x, y, color):
+    def __init__(self, x, y, target_color):
         super(Target, self).__init__(x, y)
-        self.color = color
+        self.target_color = target_color
         self.glborder_color = (
-                self.color.r/COLOR_COMPONENT_MAX, 
-                self.color.g/COLOR_COMPONENT_MAX, 
-                self.color.b/COLOR_COMPONENT_MAX,
+                self.target_color.r/COLOR_COMPONENT_MAX, 
+                self.target_color.g/COLOR_COMPONENT_MAX, 
+                self.target_color.b/COLOR_COMPONENT_MAX,
                 1
                 )
     def draw_sink(self):
@@ -270,6 +271,16 @@ class Target(ColorSink):
             self.color = Color( self.color.r + source.color.r,
                            self.color.g + source.color.g,
                            self.color.b + source.color.b )
+        t = self.target_color
+        c = self.color
+        if t.r == c.r and t.g == c.g and t.b == c.b:
+            global label
+            label = pyglet.text.Label('You Win!',
+                      font_name='Times New Roman',
+                      font_size=36,
+                      x=window.width//2, y=window.height//2,
+                      anchor_x='center', anchor_y='center')
+
         self.update_gl_color()
 
 
@@ -367,6 +378,9 @@ def main():
         window.clear()
         draw_gridlines(window.width, window.height)
         draw_cells()
+        global label
+        if label is not None:
+            label.draw()
 
     @window.event
     def on_mouse_press(x, y, button, modifiers):
