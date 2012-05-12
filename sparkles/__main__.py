@@ -217,14 +217,14 @@ class Wigit(ColorSink, ColorStream):
                 self.color = Color(c.r/2, c.g/2, c.b/2)
             else:
                 self.color = source.color
-            self.update_gl_color()
         elif count > 1:
-            print "yes"
             color = Color(0,0,0)
             for source in self.sources:
                 color = Color( color.r + source.color.r,
                                color.g + source.color.g,
                                color.b + source.color.b )
+            self.color = color
+        self.update_gl_color()
 
     def rotate(self):
         super(Wigit, self).rotate()
