@@ -76,6 +76,11 @@ def update_things():
     map(lambda sink: sink.reset_sources(), sinks)
     map(lambda stream: stream.clear_sink(), streams)
         
+    # now that all of the streams are connected up, 
+    # do a pass to make sure they have the colors right
+    map(lambda stream: stream.update_output(), streams)
+
+def recompute_graph(): 
     # follow the graph from each of the color sources to its eventual terminating sink
     # and connect each source to the next sink
     for source in filter(lambda x: isinstance(x, ColorStreamSource), things):
@@ -97,10 +102,6 @@ def update_things():
             else:
                 next_sink = None            
 
-    # now that all of the streams are connected up, do a pass to make sure they have the colors right
-    map(lambda stream: stream.update_output(), streams)
-
-    
 
 class Color(object):
     def __init__(self, r, g, b):
@@ -309,7 +310,7 @@ def main():
                 rollback = lambda : things.remove(new_thing)
             elif isinstance(selected_things[0], ColorStream):
                 selected_things[0].rotate()
-                rollback = lambda : selected_things[0].rotate()
+                rollback = lambda : selected_things[0].unrotate()
 
         if button == mouse.RIGHT:
             f = lambda t: t.x == x and t.y == y
