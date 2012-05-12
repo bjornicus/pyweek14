@@ -316,8 +316,13 @@ def main():
                 things.append(new_thing)
                 rollback = lambda : things.remove(new_thing)
             elif isinstance(selected_things[0], ColorStream):
-                selected_things[0].rotate()
-                rollback = lambda : selected_things[0].unrotate()
+                for i in range(4):
+                    try:
+                        selected_things[0].rotate()
+                        recompute_graph()
+                        break
+                    except AbortException:
+                        pass
 
         if button == mouse.RIGHT:
             f = lambda t: t.x == x and t.y == y
