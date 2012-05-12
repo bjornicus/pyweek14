@@ -1,4 +1,5 @@
 import pyglet
+import time
 from pyglet.gl import *
 from pyglet.window import mouse
 from pyglet.window import key
@@ -194,19 +195,27 @@ class ColorStreamSource(ColorStream):
 class ColorSink(Thing):
     def __init__(self, x, y):
         super(ColorSink, self).__init__(x, y)
-        self.glcolor = (0.5, 0.5, 0.5, 1)
-        self.sources = []
+        self.reset_sources()
+        self.reset_color()
 
     def draw_sink(self):
-        glColor4f(*self.glcolor)
         x1 = self.x
         x2 = x1 + SQUARE_SIZE
         y1 = self.y
         y2 = y1 + SQUARE_SIZE
 
+        glColor4f(*self.glcolor)
         pyglet.graphics.draw(4, pyglet.gl.GL_QUADS,
                 ('v2i', (x1,y1, x1,y2, x2,y2, x2,y1))
         )
+        glColor4f(*self.glborder_color)
+        glBegin(GL_LINE_STRIP)
+        glVertex2f(x1,y1)
+        glVertex2f(x1,y2)
+        glVertex2f(x2,y2)
+        glVertex2f(x2,y1)
+        glVertex2f(x1,y1)
+        glEnd()
         glColor4f(1, 1, 1, 1)
 
     def update(self):
@@ -217,7 +226,10 @@ class ColorSink(Thing):
 
     def reset_sources(self):
         self.sources = []
+
+    def reset_color(self):
         self.glcolor = (0.5, 0.5, 0.5, 1)
+        self.glborder_color = (1,1,1, 0.5)
 
 class Wall(ColorSink):
     def __init__(self, x, y):
@@ -234,6 +246,11 @@ class Wigit(ColorSink, ColorStream):
 
     def update_output(self):
         count = len(self.sources)
+        self.color = Color(0,0,0)
+        # make sure any parents are already updated
+        map(lambda stream: stream.update_output(), 
+                filter(lambda thing: isinstance(thing, ColorStream), self.sources)
+                )
         if count == 1:
             source = self.sources[0]
             if self.output_direction == source.output_direction:
@@ -260,7 +277,6 @@ class Wigit(ColorSink, ColorStream):
 
     def reset_sources(self):
         super(Wigit, self).reset_sources()
-        self.update_output()
 
 def load_level():
     global window
@@ -360,6 +376,15 @@ def main():
 def dump_things():
     for thing in things:
         print thing.x,thing.y, ' - ', thing
+
+def draw_square(x,y):
+    glColor4f(1,1,1,1)
+    x2 = x + SQUARE_SIZE
+    y2 = y + SQUARE_SIZE
+
+    pyglet.graphics.draw(4, pyglet.gl.GL_LINES,
+            ('v2i', (x,y, x,y2, x2,y2, x2,y))
+    )
 
 if __name__ == "__main__":
     main()
