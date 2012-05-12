@@ -75,6 +75,8 @@ def update_things():
     streams = filter(lambda x: isinstance(x, ColorStream), things)
     map(lambda sink: sink.reset_sources(), sinks)
     map(lambda stream: stream.clear_sink(), streams)
+
+    recompute_graph()
         
     # now that all of the streams are connected up, 
     # do a pass to make sure they have the colors right
@@ -136,6 +138,11 @@ class ColorStream(Thing):
 
     def rotate(self):
         sequence = [UP,RIGHT,DOWN,LEFT,UP]
+        next_direction = sequence.index(self.output_direction) + 1
+        self.output_direction = sequence[next_direction]
+
+    def unrotate(self):
+        sequence = [UP,LEFT,DOWN,RIGHT,UP]
         next_direction = sequence.index(self.output_direction) + 1
         self.output_direction = sequence[next_direction]
 
