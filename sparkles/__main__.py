@@ -41,7 +41,6 @@ class Grid(object):
         f = lambda x: isinstance(x, ColorSink)
         for sink in filter(f, self.cells.itervalues()):
             sink.reset_sources()
-            sink.update()
         for (coords, item) in self.cells.iteritems():
             if isinstance(item, ColorStream):
                 self.update_colorstream(coords[0], coords[1], item)
@@ -189,6 +188,7 @@ class ColorCollector(ColorSink):
 
     def reset_sources(self):
         self.sources = []
+        self.update()
 
     def update(self):
         r = 0.1
