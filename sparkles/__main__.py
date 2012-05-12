@@ -192,6 +192,7 @@ class ColorSink(Thing):
 
     def reset_sources(self):
         self.sources = []
+        self.glcolor = (0.5, 0.5, 0.5, 1)
 
 class Wall(ColorSink):
     def __init__(self, x, y):
@@ -217,11 +218,25 @@ class Wigit(ColorSink, ColorStream):
             else:
                 self.color = source.color
             self.update_gl_color()
-        else:
-            x
+        elif count > 1:
+            print "yes"
+            color = Color(0,0,0)
+            for source in self.sources:
+                color = Color( color.r + source.color.r,
+                               color.g + source.color.g,
+                               color.b + source.color.b )
+
+    def rotate(self):
+        super(Wigit, self).rotate()
+        #TODO don't point back at any sources (keep rotating)
+
+    def clear_sink(self):
+        super(Wigit, self).clear_sink()
+        self.active = False
 
     def reset_sources(self):
         super(Wigit, self).reset_sources()
+        self.update_output()
 
 def load_level():
     things.append(ColorStreamSource(
@@ -266,6 +281,7 @@ def main():
     def on_mouse_press(x, y, button, modifiers):
         x = x - x%SQUARE_SIZE
         y = y - y%SQUARE_SIZE
+
         if button == mouse.LEFT:
             f = lambda t: t.x == x and t.y == y
             selected_things = filter(f, things)
@@ -274,13 +290,14 @@ def main():
                 things.append(new_thing)
             elif isinstance(selected_things[0], ColorStream):
                 selected_things[0].rotate()
-            update_things()
+
         if button == mouse.RIGHT:
             f = lambda t: t.x == x and t.y == y
             selected_things = filter(f, things)
             for thing in selected_things:
                 things.remove(thing)
-            update_things()
+
+        update_things()
 
     @window.event
     def on_key_press(symbol, modifiers):
