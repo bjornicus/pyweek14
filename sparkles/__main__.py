@@ -6,160 +6,154 @@ from pyglet.window import key
 COLOR_COMPONENT_MAX = 16.0
 SQUARE_SIZE = 20
 
-class Grid(object):
-    def __init__(self, width, height):
-        super(Grid, self).__init__()
-        self.width = width
-        self.height = height
-        self.x_count = width/SQUARE_SIZE
-        self.y_count = height/SQUARE_SIZE
-        self.cells = {}
-        for x in range(self.x_count):
-            for y in range(self.y_count):
-                self.cells[x,y] = None
-        self.generator = lambda location: None
-        self.cells[15,5] = ColorStreamSource(-1,0, COLOR_COMPONENT_MAX,0,0 )
-        self.cells[30,1] = ColorStreamSource(0,1, 0, 0, COLOR_COMPONENT_MAX)
-        self.cells[5,15] = ColorStreamSource(1,0, 0, COLOR_COMPONENT_MAX,0 )
-        self.cells[2,20] = ColorStreamSource(0,-1, 0, COLOR_COMPONENT_MAX, COLOR_COMPONENT_MAX)
-        self.cells[31,8] = ColorStreamSource(-1,0, 0, 0, COLOR_COMPONENT_MAX)
-        self.update()
+things = []
+window = None
+thing_generator = None
 
-    def draw(self):
-        self.draw_gridlines()
-        self.draw_cells()
 
-    def draw_cells(self):
-        f = lambda x: isinstance(x, ColorStream)
-        for stream in filter(f, self.cells.itervalues()):
-            stream.draw_stream()
-        f = lambda x: isinstance(x, ColorSink)
-        for sink in filter(f, self.cells.itervalues()):
-            sink.draw_sink()
+def draw_gridlines(width, height):
+    glColor4f(0.1, 0.1, 0.1, 0.5)
+    for x in range(0, width, SQUARE_SIZE):
+        pyglet.graphics.draw(2, pyglet.gl.GL_LINES,
+                ('v2i', (x, 0, x, height))
+        )
 
-    def update(self):
-        f = lambda x: isinstance(x, ColorSink)
-        for sink in filter(f, self.cells.itervalues()):
-            sink.reset_sources()
-        for (coords, item) in self.cells.iteritems():
-            if isinstance(item, ColorStream):
-                self.update_colorstream(coords[0], coords[1], item)
+    for y in range(0, height, SQUARE_SIZE):
+        pyglet.graphics.draw(2, pyglet.gl.GL_LINES,
+                ('v2i', (0, y, width, y))
+        )
 
-    def find_next_sink(self, x, y, direction):
-        item = None
+def draw_cells():
+    for stream in filter(lambda x: isinstance(x, ColorStream), things):
+        stream.draw_stream()
+    for sink in filter(lambda x: isinstance(x, ColorSink), things):
+        sink.draw_sink()
+
+def find_next_sink(x, y, direction):
+    candidates = []
+    sinks = filter(lambda t: isinstance(t, ColorSink), things)
+    def xmin(thing1, thing2):
+        if abs(x - thing1.x) < abs(x - thing2.x):
+            return thing1
+        return thnig2
+    def ymin(thing1, thing2):
+        if abs(y - thing1.y) < abs(y - thing2.y):
+            return thing1
+        return thnig2
+
+    reduce_function = xmin
+    if direction.x == 1:
+        candidates = filter(lambda sink: sink.y == y and sink.x > x, sinks)
+    elif direction.x == -1:
+        candidates = filter(lambda sink: sink.y == y and sink.x < x, sinks)
+    elif direction.y == 1:
+        candidates = filter(lambda sink: sink.x == x and sink.y > y, sinks)
+        reduce_function = ymin
+    elif direction.x == -1:
+        candidates = filter(lambda sink: sink.x == x and sink.y < y, sinks)
+        reduce_function = ymin
+
+    if len(candidates) == 0:
+        return None
+    
+    return reduce(reduce_function, candidates)
+
+def update_things():
+    # reset all of the sinks
+    sinks = filter(lambda x: isinstance(x, ColorSink), things)
+    map(lambda sink: sink.reset_sources(), sinks)
         
-        if direction is None:
-            return Vector2d(x,y), item
-
-        while (x > 0 and x < self.x_count and y > 0 and y < self.y_count):
-            x += direction.x
-            y += direction.y
-            if not self.cells.has_key((x,y)):
-                item = None
-                break
-            item = self.cells[x,y]
-            if isinstance(item, ColorSink):
-                break
-
-        return Vector2d(x,y), item
-
-
-    def update_colorstream(self, x, y, stream):
-        x1 = x*SQUARE_SIZE + SQUARE_SIZE/2
-        y1 = y*SQUARE_SIZE + SQUARE_SIZE/2
-        location, sink = self.find_next_sink(x, y, stream.output_direction)
-        if sink is not None:
-            sink.add_source(stream)
-        x2 = location.x*SQUARE_SIZE + SQUARE_SIZE/2
-        y2 = location.y*SQUARE_SIZE + SQUARE_SIZE/2
-        stream.origin = Vector2d(x1,y1)
-        stream.end = Vector2d(x2,y2)
-
-    def draw_gridlines(self):
-        glColor4f(0.1, 0.1, 0.1, 0.5)
-        for x in range(0, self.width, SQUARE_SIZE):
-            pyglet.graphics.draw(2, pyglet.gl.GL_LINES,
-                    ('v2i', (x, 0, x, self.height))
-            )
-
-        for y in range(0, self.height, SQUARE_SIZE):
-            pyglet.graphics.draw(2, pyglet.gl.GL_LINES,
-                    ('v2i', (0, y, self.width, y))
-            )
-
-    def handle_left_click(self, x, y):
-        square = Vector2d(x/SQUARE_SIZE, y/SQUARE_SIZE)
-        square_location = Vector2d(square.x*SQUARE_SIZE, square.y*SQUARE_SIZE)
-        if self.cells[square.x, square.y] is None:
-            self.cells[square.x, square.y] = self.generator(square_location)
-        self.update()
-
-    def handle_right_click(self, x, y):
-        square = Vector2d(x/SQUARE_SIZE, y/SQUARE_SIZE)
-        self.cells[square.x, square.y] = None
-        self.update()
-
+    # follow the graph from each of the color sources to its eventual terminating sink
+    # and connect each source to the next sink
+    for source in filter(lambda x: x is ColorStreamSource, things):
+        next_sink = find_next_sink(source.x, source.y, source.output_direction)
+        while next_sink is not None:
+            source.set_sink(next_sink)
+            next_sink.add_source(source)
+            if isinstance(next_sink, ColorStream):
+                source = next_sink
+                next_sink = find_next_sink(source.x, source.y, source.output_direction)
+            else:
+                next_sink = None            
+    
 class Vector2d(object):
     def __init__(self, x, y):
         super(Vector2d, self).__init__()
         self.x = x
         self.y = y
 
-class ColorStream(object):
-    def __init__(self):
-        super(ColorStream, self).__init__()
-        self.output_direction = None
-        self.r = 0
-        self.g = 0
-        self.b = 0
-        self.color = (0, 0, 0, 1)
-        self.origin = Vector2d(0,0)
-        self.end = Vector2d(0,0)
+class Color(object):
+    def __init__(self, r, g, b):
+        super(Color, self).__init__()
+        self.r = r
+        self.g = g
+        self.b = b
+
+class Thing(object):
+    def __init__(self, x, y):
+        super(Thing, self).__init__()
+        self.x = x
+        self.y = y
+
+class ColorStream(Thing):
+    def __init__(self, x, y):
+        super(ColorStream, self).__init__(x, y)
+        self.output_direction = Vector2d(0,0)
+        self.color = Color(0, 0, 0)
+        self.glcolor = (0, 0, 0, 1)
+        self.sink = None
+
+    def set_sink(self, sink):
+        self.sink = sink
 
     def update_gl_color(self):
-        self.color = (
-                self.r/COLOR_COMPONENT_MAX, 
-                self.g/COLOR_COMPONENT_MAX, 
-                self.b/COLOR_COMPONENT_MAX,
+        self.glcolor = (
+                self.color.r/COLOR_COMPONENT_MAX, 
+                self.color.g/COLOR_COMPONENT_MAX, 
+                self.color.b/COLOR_COMPONENT_MAX,
                 1
                 )
 
     def draw_stream(self):
+        offset = SQUARE_SIZE/2
+        x1 = self.x+offset
+        y1 = self.y+offset
+        if self.sink is not None:
+            x2 = self.sink.x+offset
+            y2 = self.sink.y+offset
+        else:
+            x2 = x1 + self.output_direction.x*window.width
+            y2 = y1 + self.output_direction.y*window.height
         for i in range(1,4): 
             width = i*2
             alpha = 1-(i)/10.0
-            color = self.color[:3] + (alpha,)
-            glColor4f(*color)
+            glcolor = self.glcolor[:3] + (alpha,)
+            glColor4f(*glcolor)
             glLineWidth(width)
-            pyglet.graphics.draw(2, pyglet.gl.GL_LINES,
-                    ('v2i', (self.origin.x, self.origin.y, self.end.x, self.end.y))
-            )
+            pyglet.graphics.draw(2, pyglet.gl.GL_LINES,('v2i', (x1,y1, x2,y2) ))
 
         glLineWidth(1)
         glColor4f(1, 1, 1, 1)
 
     
 class ColorStreamSource(ColorStream):
-    def __init__(self, x_out, y_out, r, g, b):
-        super(ColorStreamSource, self).__init__()
-        self.output_direction = Vector2d(x_out, y_out)
-        self.r = r
-        self.g = g
-        self.b = b
+    def __init__(self, x, y, output_direction, color):
+        super(ColorStreamSource, self).__init__(x, y)
+        self.output_direction = output_direction
+        self.color = color
         self.update_gl_color()
 
-class ColorSink(object):
-    def __init__(self, location):
-        super(ColorSink, self).__init__()
-        self.location = location
+class ColorSink(Thing):
+    def __init__(self, x, y):
+        super(ColorSink, self).__init__(x, y)
         self.color = (0.5, 0.5, 0.5, 1)
         self.sources = None
 
     def draw_sink(self):
         glColor4f(*self.color)
-        x1 = self.location.x
+        x1 = self.x
         x2 = x1 + SQUARE_SIZE
-        y1 = self.location.y
+        y1 = self.y
         y2 = y1 + SQUARE_SIZE
 
         pyglet.graphics.draw(4, pyglet.gl.GL_QUADS,
@@ -177,8 +171,8 @@ class ColorSink(object):
         self.sources = None
 
 class ColorCollector(ColorSink):
-    def __init__(self, location):
-        super(ColorCollector, self).__init__(location)
+    def __init__(self, x, y):
+        super(ColorCollector, self).__init__(x, y)
         self.sources = []
 
     def add_source(self, source):
@@ -201,8 +195,8 @@ class ColorCollector(ColorSink):
         self.color = (r, g, b, 1.0)
 
 class Attenuator(ColorSink, ColorStream):
-    def __init__(self, location):
-        super(Attenuator, self).__init__(location)
+    def __init__(self, x, y):
+        super(Attenuator, self).__init__(x, y)
 
     def add_source(self, source):
         if self.sources is None:
@@ -216,43 +210,62 @@ class Attenuator(ColorSink, ColorStream):
 def main():
     """ your app starts here
     """
+    global window
+    global thing_generator
     window = pyglet.window.Window()
 
-    label = pyglet.text.Label('WINNING!',
-                          font_name='Times New Roman',
-                          font_size=16,
-                          x=window.width//2, y=window.height - 20,
-                          anchor_x='center', anchor_y='center')
-
-    grid = Grid(window.width, window.height)
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
     glClearColor(0.0, 0.0, 0.0, 1.0)
+    
+    thing_generator = lambda x, y: Attenuator(x, y)
 
     @window.event
     def on_draw():
         window.clear()
-        label.draw()
-        grid.draw()
+        draw_gridlines(window.width, window.height)
+        draw_cells()
 
     @window.event
     def on_mouse_press(x, y, button, modifiers):
         if button == mouse.LEFT:
-            grid.handle_left_click(x,y)
+            x = x - x%SQUARE_SIZE
+            y = y - y%SQUARE_SIZE
+            f = lambda t: t.x == x and t.y == y
+            selected_things = filter(f, things)
+            if len(selected_things) == 0:
+                new_thing = thing_generator(x,y)
+                things.append(new_thing)
+            update_things()
         if button == mouse.RIGHT:
-            grid.handle_right_click(x,y)
+            f = lambda t: t.x == x and t.y == y
+            selected_things = filter(f, things)
+            for thing in selected_things:
+                things.remove(thing)
+            update_things()
 
     @window.event
     def on_key_press(symbol, modifiers):
+        global thing_generator
         if symbol == key.S:
-            grid.generator = lambda location: ColorStreamSource(0,1, COLOR_COMPONENT_MAX, 0, COLOR_COMPONENT_MAX)
+            thing_generator = lambda x, y: ColorStreamSource(
+                    x,y, 
+                    Vector2d(0,1), 
+                    Color(COLOR_COMPONENT_MAX, 0, COLOR_COMPONENT_MAX)
+                    )
         elif symbol == key.C:
-            grid.generator = lambda location: ColorCollector(location)
+            thing_generator = lambda x, y: ColorCollector(x, y)
         elif symbol == key.A:
-            grid.generator = lambda location: Attenuator(location)
+            thing_generator = lambda x, y: Attenuator(x, y)
+        elif symbol == key.D:
+            print " ------- "
+            dump_things()
 
     pyglet.app.run()
 
+def dump_things():
+    for thing in things:
+        print thing.x,thing.y, ' - ', thing
 
 if __name__ == "__main__":
     main()
