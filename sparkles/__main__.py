@@ -127,7 +127,7 @@ class Thing(object):
 class ColorStream(Thing):
     def __init__(self, x, y):
         super(ColorStream, self).__init__(x, y)
-        self.output_direction = UP
+        self.output_direction = LEFT
         self.color = Color(0, 0, 0)
         self.glcolor = (0, 0, 0, 1)
         self.sink = None
