@@ -206,9 +206,11 @@ class Wigit(ColorSink, ColorStream):
         count = len(self.sources)
         if count == 1:
             source = self.sources[0]
-            self.output_direction = source.output_direction
-            c = source.color
-            self.color = Color(c.r/2, c.g/2, c.b/2)
+            if self.output_direction == source.output_direction:
+                c = source.color
+                self.color = Color(c.r/2, c.g/2, c.b/2)
+            else:
+                self.color = source.color
             self.update_gl_color()
         else:
             x
