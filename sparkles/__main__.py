@@ -353,6 +353,9 @@ def load_level():
             UP,
             Color(0, 0, COLOR_COMPONENT_MAX)
             ))
+    attenuator = Wigit(window.width/2, window.height/4)
+    attenuator.output_direction = UP
+    things.append(attenuator)
     things.append(Target(
             window.width/2, window.height/2,
             Color(COLOR_COMPONENT_MAX/2, 
