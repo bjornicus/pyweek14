@@ -91,6 +91,10 @@ def update_things():
                     next_sink = None
             else:
                 next_sink = None            
+
+    # now that all of the streams are connected up, do a pass to make sure they have the colors right
+    map(lambda stream: stream.update_output(), streams)
+
     
 
 class Color(object):
@@ -125,6 +129,9 @@ class ColorStream(Thing):
         sequence = [UP,RIGHT,DOWN,LEFT,UP]
         next_direction = sequence.index(self.output_direction) + 1
         self.output_direction = sequence[next_direction]
+
+    def update_output(self):
+        pass
 
     def update_gl_color(self):
         self.glcolor = (
@@ -206,7 +213,6 @@ class Wigit(ColorSink, ColorStream):
         self.active = True
         if source not in self.sources:
             self.sources.append(source)
-            self.update_output()
 
     def update_output(self):
         count = len(self.sources)
@@ -220,6 +226,7 @@ class Wigit(ColorSink, ColorStream):
         elif count > 1:
             color = Color(0,0,0)
             for source in self.sources:
+                print "source: ",source.color.r,source.color.g,source.color.b
                 color = Color( color.r + source.color.r,
                                color.g + source.color.g,
                                color.b + source.color.b )
