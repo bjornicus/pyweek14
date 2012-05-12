@@ -52,7 +52,7 @@ def update_things():
         
     # now that all of the streams are connected up, 
     # do a pass to make sure they have the colors right
-    map(lambda stream: stream.update_output(), streams)
+    map(lambda thing: thing.update_color(), things)
 
 def recompute_graph(): 
     # follow the graph from each of the color sources to its eventual terminating sink
@@ -120,16 +120,25 @@ class Thing(object):
         super(Thing, self).__init__()
         self.x = x
         self.y = y
-        self.visited = False
-    def unvisit(self):
-        self.visited = False
+        self.color = Color(0, 0, 0)
+        self.glcolor = (0, 0, 0, 1)
+
+    def update_color(self):
+        pass
+
+    def update_gl_color(self):
+        self.glcolor = (
+                self.color.r/COLOR_COMPONENT_MAX, 
+                self.color.g/COLOR_COMPONENT_MAX, 
+                self.color.b/COLOR_COMPONENT_MAX,
+                1
+                )
+
 
 class ColorStream(Thing):
     def __init__(self, x, y):
         super(ColorStream, self).__init__(x, y)
         self.output_direction = LEFT
-        self.color = Color(0, 0, 0)
-        self.glcolor = (0, 0, 0, 1)
         self.sink = None
         self.active = False
 
@@ -149,16 +158,6 @@ class ColorStream(Thing):
         next_direction = sequence.index(self.output_direction) + 1
         self.output_direction = sequence[next_direction]
 
-    def update_output(self):
-        pass
-
-    def update_gl_color(self):
-        self.glcolor = (
-                self.color.r/COLOR_COMPONENT_MAX, 
-                self.color.g/COLOR_COMPONENT_MAX, 
-                self.color.b/COLOR_COMPONENT_MAX,
-                1
-                )
 
     def draw_stream(self):
         if not self.active:
@@ -203,11 +202,17 @@ class ColorSink(Thing):
         x2 = x1 + SQUARE_SIZE
         y1 = self.y
         y2 = y1 + SQUARE_SIZE
+        self.draw_fill(x1,y1, x2,y2)
+        self.draw_border(x1,y1, x2,y2)
 
+    def draw_fill(self, x1,y1, x2,y2):
         glColor4f(*self.glcolor)
         pyglet.graphics.draw(4, pyglet.gl.GL_QUADS,
                 ('v2i', (x1,y1, x1,y2, x2,y2, x2,y1))
         )
+        glColor4f(1, 1, 1, 1)
+
+    def draw_border(self, x1,y1, x2,y2):
         glColor4f(*self.glborder_color)
         glBegin(GL_LINE_STRIP)
         glVertex2f(x1,y1)
@@ -217,6 +222,30 @@ class ColorSink(Thing):
         glVertex2f(x1,y1)
         glEnd()
         glColor4f(1, 1, 1, 1)
+
+    def update_color(self):
+        count = len(self.sources)
+        self.color = Color(0,0,0)
+        # make sure any parents are already updated
+        map(lambda stream: stream.update_color(), 
+                filter(lambda thing: isinstance(thing, ColorStream), self.sources)
+                )
+        if count == 1:
+            source = self.sources[0]
+            if self.output_direction == source.output_direction:
+                c = source.color
+                self.color = Color(c.r/2, c.g/2, c.b/2)
+            else:
+                self.color = source.color
+        elif count > 1:
+            color = Color(0,0,0)
+            for source in self.sources:
+                color = Color( color.r + source.color.r,
+                               color.g + source.color.g,
+                               color.b + source.color.b )
+            self.color = color
+        self.update_gl_color()
+
 
     def update(self):
         pass
@@ -235,10 +264,23 @@ class Target(ColorSink):
     def __init__(self, x, y, color):
         super(Target, self).__init__(x, y)
         self.color = color
+        self.glborder_color = (
+                self.color.r/COLOR_COMPONENT_MAX, 
+                self.color.g/COLOR_COMPONENT_MAX, 
+                self.color.b/COLOR_COMPONENT_MAX,
+                1
+                )
+    def draw_sink(self):
+        glLineWidth(3)
+        super(Target, self).draw_sink()
 
 class Wall(ColorSink):
     def __init__(self, x, y):
         super(Wall, self).__init__(x, y)
+    def update_color(self):
+        pass
+    def draw_border(self, x1,y1,x2,y2):
+        pass
 
 class Wigit(ColorSink, ColorStream):
     def __init__(self, x, y):
@@ -249,28 +291,6 @@ class Wigit(ColorSink, ColorStream):
         if source not in self.sources:
             self.sources.append(source)
 
-    def update_output(self):
-        count = len(self.sources)
-        self.color = Color(0,0,0)
-        # make sure any parents are already updated
-        map(lambda stream: stream.update_output(), 
-                filter(lambda thing: isinstance(thing, ColorStream), self.sources)
-                )
-        if count == 1:
-            source = self.sources[0]
-            if self.output_direction == source.output_direction:
-                c = source.color
-                self.color = Color(c.r/2, c.g/2, c.b/2)
-            else:
-                self.color = source.color
-        elif count > 1:
-            color = Color(0,0,0)
-            for source in self.sources:
-                color = Color( color.r + source.color.r,
-                               color.g + source.color.g,
-                               color.b + source.color.b )
-            self.color = color
-        self.update_gl_color()
 
     def rotate(self):
         super(Wigit, self).rotate()
