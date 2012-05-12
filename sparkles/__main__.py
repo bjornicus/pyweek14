@@ -53,14 +53,14 @@ def find_next_sink(x, y, direction):
         return thing2
 
     reduce_function = xmin
-    if direction.x == 1:
+    if direction is RIGHT:
         candidates = filter(lambda sink: sink.y == y and sink.x > x, sinks)
-    elif direction.x == -1:
+    elif direction is LEFT:
         candidates = filter(lambda sink: sink.y == y and sink.x < x, sinks)
-    elif direction.y == 1:
+    elif direction is UP:
         candidates = filter(lambda sink: sink.x == x and sink.y > y, sinks)
         reduce_function = ymin
-    elif direction.x == -1:
+    elif direction is DOWN:
         candidates = filter(lambda sink: sink.x == x and sink.y < y, sinks)
         reduce_function = ymin
 
@@ -79,8 +79,13 @@ def update_things():
     # follow the graph from each of the color sources to its eventual terminating sink
     # and connect each source to the next sink
     for source in filter(lambda x: isinstance(x, ColorStreamSource), things):
+        visitcount = 0
         next_sink = find_next_sink(source.x, source.y, source.output_direction)
         while next_sink is not None:
+            visitcount += 1
+            if visitcount > len(things):
+                raise Exception("ABORT!")
+            next_sink.visited
             source.set_sink(next_sink)
             next_sink.add_source(source)
             if isinstance(next_sink, ColorStream):
@@ -109,6 +114,9 @@ class Thing(object):
         super(Thing, self).__init__()
         self.x = x
         self.y = y
+        self.visited = False
+    def unvisit(self):
+        self.visited = False
 
 class ColorStream(Thing):
     def __init__(self, x, y):
@@ -226,7 +234,6 @@ class Wigit(ColorSink, ColorStream):
         elif count > 1:
             color = Color(0,0,0)
             for source in self.sources:
-                print "source: ",source.color.r,source.color.g,source.color.b
                 color = Color( color.r + source.color.r,
                                color.g + source.color.g,
                                color.b + source.color.b )
