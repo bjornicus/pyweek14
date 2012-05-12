@@ -151,7 +151,7 @@ class ColorStreamSource(ColorStream):
 class ColorSink(Thing):
     def __init__(self, x, y):
         super(ColorSink, self).__init__(x, y)
-        self.color = (0.5, 0.5, 0.5, 1)
+        self.glcolor = (0.5, 0.5, 0.5, 1)
         self.sources = None
 
     def draw_sink(self):
@@ -175,33 +175,13 @@ class ColorSink(Thing):
     def reset_sources(self):
         self.sources = None
 
-class ColorCollector(ColorSink):
+class Wall(ColorSink):
     def __init__(self, x, y):
-        super(ColorCollector, self).__init__(x, y)
-        self.sources = []
+        super(Wall, self).__init__(x, y)
 
-    def add_source(self, source):
-        if not source in self.sources:
-            self.sources.append(source)
-        self.update()
-
-    def reset_sources(self):
-        self.sources = []
-        self.update()
-
-    def update(self):
-        r = 0.1
-        g = 0.1
-        b = 0.1
-        for source in self.sources:
-            r += source.r
-            g += source.g
-            b += source.b
-        self.color = (r, g, b, 1.0)
-
-class Attenuator(ColorSink, ColorStream):
+class Wigit(ColorSink, ColorStream):
     def __init__(self, x, y):
-        super(Attenuator, self).__init__(x, y)
+        super(Wigit, self).__init__(x, y)
 
     def add_source(self, source):
         if self.sources is None:
@@ -210,6 +190,10 @@ class Attenuator(ColorSink, ColorStream):
             c = source.color
             self.color = Color(c.r/2, c.g/2, c.b/2)
             self.update_gl_color()
+
+    def reset_sources(self):
+        super(Wigit, self).reset_sources()
+        self.output_direction = Vector2d(0,0)
 
 def load_level():
     things.append(ColorStreamSource(
@@ -239,7 +223,7 @@ def main():
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
     glClearColor(0.0, 0.0, 0.0, 1.0)
     
-    thing_generator = lambda x, y: Attenuator(x, y)
+    thing_generator = lambda x, y: Wigit(x, y)
 
     load_level()
     update_things()
@@ -277,10 +261,10 @@ def main():
                     Vector2d(0,1), 
                     Color(COLOR_COMPONENT_MAX, 0, COLOR_COMPONENT_MAX)
                     )
-        elif symbol == key.C:
-            thing_generator = lambda x, y: ColorCollector(x, y)
+        elif symbol == key.W:
+            thing_generator = lambda x, y: Wall(x, y)
         elif symbol == key.A:
-            thing_generator = lambda x, y: Attenuator(x, y)
+            thing_generator = lambda x, y: Wigit(x, y)
         elif symbol == key.D:
             print " ------- "
             dump_things()
