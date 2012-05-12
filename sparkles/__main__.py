@@ -231,6 +231,10 @@ class ColorSink(Thing):
         self.glcolor = (0.5, 0.5, 0.5, 1)
         self.glborder_color = (1,1,1, 0.5)
 
+class Target(ColorSink):
+    def __init__(self, x, y):
+        super(Target, self).__init__(x, y)
+
 class Wall(ColorSink):
     def __init__(self, x, y):
         super(Wall, self).__init__(x, y)
