@@ -246,20 +246,21 @@ class Wigit(ColorSink, ColorStream):
         self.update_output()
 
 def load_level():
+    global window
     things.append(ColorStreamSource(
-            20, 140, 
-            RIGHT,
+            window.width/4, -SQUARE_SIZE, 
+            UP,
             Color(COLOR_COMPONENT_MAX, 0, 0)
             ))
     things.append(ColorStreamSource(
-            120, 40, 
+            window.width/2, -SQUARE_SIZE, 
             UP,
-            Color(0,0,COLOR_COMPONENT_MAX)
+            Color(0,COLOR_COMPONENT_MAX,0)
             ))
     things.append(ColorStreamSource(
-            220, 240, 
-            LEFT,
-            Color(COLOR_COMPONENT_MAX, COLOR_COMPONENT_MAX, COLOR_COMPONENT_MAX)
+            3*window.width/4, -SQUARE_SIZE, 
+            UP,
+            Color(0, 0, COLOR_COMPONENT_MAX)
             ))
 
 def main():
