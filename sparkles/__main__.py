@@ -232,8 +232,9 @@ class ColorSink(Thing):
         self.glborder_color = (1,1,1, 0.5)
 
 class Target(ColorSink):
-    def __init__(self, x, y):
+    def __init__(self, x, y, color):
         super(Target, self).__init__(x, y)
+        self.color = color
 
 class Wall(ColorSink):
     def __init__(self, x, y):
@@ -330,21 +331,25 @@ def main():
         x = x - x%SQUARE_SIZE
         y = y - y%SQUARE_SIZE
 
+        def try_to_rotate(thing):
+            for i in range(4):
+                try:
+                    thing.rotate()
+                    recompute_graph()
+                    break
+                except AbortException:
+                    pass
+
         if button == mouse.LEFT:
             f = lambda t: t.x == x and t.y == y
             selected_things = filter(f, things)
             if len(selected_things) == 0:
                 new_thing = thing_generator(x,y)
                 things.append(new_thing)
+                try_to_rotate(new_thing)
                 rollback = lambda : things.remove(new_thing)
             elif isinstance(selected_things[0], ColorStream):
-                for i in range(4):
-                    try:
-                        selected_things[0].rotate()
-                        recompute_graph()
-                        break
-                    except AbortException:
-                        pass
+                try_to_rotate(selected_things[0])
 
         if button == mouse.RIGHT:
             f = lambda t: t.x == x and t.y == y
@@ -358,6 +363,7 @@ def main():
             rollback()
             update_things()
 
+
     @window.event
     def on_key_press(symbol, modifiers):
         global thing_generator
@@ -369,6 +375,8 @@ def main():
                     )
         elif symbol == key.W:
             thing_generator = lambda x, y: Wall(x, y)
+        elif symbol == key.T:
+            thing_generator = lambda x, y: Target(x, y, Color(COLOR_COMPONENT_MAX, 0, 0))
         elif symbol == key.A:
             thing_generator = lambda x, y: Wigit(x, y)
         elif symbol == key.D:
