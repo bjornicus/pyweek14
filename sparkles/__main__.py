@@ -61,13 +61,15 @@ def find_next_sink(x, y, direction):
 def update_things():
     # reset all of the sinks
     sinks = filter(lambda x: isinstance(x, ColorSink), things)
+    streams = filter(lambda x: isinstance(x, ColorStream), things)
     map(lambda sink: sink.reset_sources(), sinks)
+    map(lambda stream: stream.clear_sink(), streams)
         
     # follow the graph from each of the color sources to its eventual terminating sink
     # and connect each source to the next sink
     for source in filter(lambda x: isinstance(x, ColorStreamSource), things):
         next_sink = find_next_sink(source.x, source.y, source.output_direction)
-        print next_sink
+        print "next: ",next_sink
         while next_sink is not None:
             source.set_sink(next_sink)
             next_sink.add_source(source)
@@ -103,6 +105,9 @@ class ColorStream(Thing):
         self.color = Color(0, 0, 0)
         self.glcolor = (0, 0, 0, 1)
         self.sink = None
+
+    def clear_sink(self):
+        self.sink = None        
 
     def set_sink(self, sink):
         self.sink = sink
