@@ -278,7 +278,7 @@ class Target(ColorSink):
             label = pyglet.text.Label('You Win!',
                       font_name='Times New Roman',
                       font_size=36,
-                      x=window.width//2, y=window.height//2,
+                      x=window.width//2, y=3*window.height//4,
                       anchor_x='center', anchor_y='center')
 
         self.update_gl_color()
@@ -352,6 +352,12 @@ def load_level():
             3*window.width/4, -SQUARE_SIZE, 
             UP,
             Color(0, 0, COLOR_COMPONENT_MAX)
+            ))
+    things.append(Target(
+            window.width/2, window.height/2,
+            Color(COLOR_COMPONENT_MAX/2, 
+                  COLOR_COMPONENT_MAX/4, 
+                  COLOR_COMPONENT_MAX/2)
             ))
 
 class AbortException(Exception):
