@@ -40,9 +40,46 @@ def draw_cells():
     for sink in filter(lambda x: isinstance(x, ColorSink), things):
         sink.draw_sink()
 
+def update_things():
+    # reset all of the sinks
+    sinks = filter(lambda x: isinstance(x, ColorSink), things)
+    streams = filter(lambda x: isinstance(x, ColorStream), things)
+    map(lambda sink: sink.reset_sources(), sinks)
+    map(lambda stream: stream.clear_sink(), streams)
+
+    recompute_graph()
+        
+    # now that all of the streams are connected up, 
+    # do a pass to make sure they have the colors right
+    map(lambda stream: stream.update_output(), streams)
+
+def recompute_graph(): 
+    # follow the graph from each of the color sources to its eventual terminating sink
+    # and connect each source to the next sink
+    for source in filter(lambda x: isinstance(x, ColorStreamSource), things):
+        visitcount = 0
+        next_sink = find_next_sink(source.x, source.y, source.output_direction)
+        while next_sink is not None:
+            visitcount += 1
+            if visitcount > len(things):
+                raise AbortException("ABORT!")
+            if isinstance(next_sink, ColorStreamSource):
+                raise AbortException("ABORT!")
+            source.set_sink(next_sink)
+            next_sink.add_source(source)
+            if isinstance(next_sink, ColorStream):
+                source = next_sink
+                if source.active:
+                    next_sink = find_next_sink(source.x, source.y, source.output_direction)
+                else:
+                    next_sink = None
+            else:
+                next_sink = None            
+
 def find_next_sink(x, y, direction):
     candidates = []
-    sinks = filter(lambda t: isinstance(t, ColorSink), things)
+    #sinks = filter(lambda t: isinstance(t, ColorSink), things)
+    sinks = things
     def xmin(thing1, thing2):
         if abs(x - thing1.x) < abs(x - thing2.x):
             return thing1
@@ -68,41 +105,6 @@ def find_next_sink(x, y, direction):
         return None
     
     return reduce(reduce_function, candidates)
-
-def update_things():
-    # reset all of the sinks
-    sinks = filter(lambda x: isinstance(x, ColorSink), things)
-    streams = filter(lambda x: isinstance(x, ColorStream), things)
-    map(lambda sink: sink.reset_sources(), sinks)
-    map(lambda stream: stream.clear_sink(), streams)
-
-    recompute_graph()
-        
-    # now that all of the streams are connected up, 
-    # do a pass to make sure they have the colors right
-    map(lambda stream: stream.update_output(), streams)
-
-def recompute_graph(): 
-    # follow the graph from each of the color sources to its eventual terminating sink
-    # and connect each source to the next sink
-    for source in filter(lambda x: isinstance(x, ColorStreamSource), things):
-        visitcount = 0
-        next_sink = find_next_sink(source.x, source.y, source.output_direction)
-        while next_sink is not None:
-            visitcount += 1
-            if visitcount > len(things):
-                raise AbortException("ABORT!")
-            next_sink.visited
-            source.set_sink(next_sink)
-            next_sink.add_source(source)
-            if isinstance(next_sink, ColorStream):
-                source = next_sink
-                if source.active:
-                    next_sink = find_next_sink(source.x, source.y, source.output_direction)
-                else:
-                    next_sink = None
-            else:
-                next_sink = None            
 
 
 class Color(object):
