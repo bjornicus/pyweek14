@@ -69,7 +69,6 @@ def update_things():
     # and connect each source to the next sink
     for source in filter(lambda x: isinstance(x, ColorStreamSource), things):
         next_sink = find_next_sink(source.x, source.y, source.output_direction)
-        print "next: ",next_sink
         while next_sink is not None:
             source.set_sink(next_sink)
             next_sink.add_source(source)
@@ -182,7 +181,6 @@ class ColorCollector(ColorSink):
         self.sources = []
 
     def add_source(self, source):
-        print "a - add"
         if not source in self.sources:
             self.sources.append(source)
         self.update()
