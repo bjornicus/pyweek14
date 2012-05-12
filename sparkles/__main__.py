@@ -332,6 +332,8 @@ def main():
         y = y - y%SQUARE_SIZE
 
         def try_to_rotate(thing):
+            if not isinstance(thing, ColorStream):
+                return
             for i in range(4):
                 try:
                     thing.rotate()
@@ -348,7 +350,7 @@ def main():
                 things.append(new_thing)
                 try_to_rotate(new_thing)
                 rollback = lambda : things.remove(new_thing)
-            elif isinstance(selected_things[0], ColorStream):
+            else: 
                 try_to_rotate(selected_things[0])
 
         if button == mouse.RIGHT:
