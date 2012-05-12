@@ -121,6 +121,11 @@ class ColorStream(Thing):
     def set_sink(self, sink):
         self.sink = sink
 
+    def rotate(self):
+        sequence = [UP,RIGHT,DOWN,LEFT,UP]
+        next_direction = sequence.index(self.output_direction) + 1
+        self.output_direction = sequence[next_direction]
+
     def update_gl_color(self):
         self.glcolor = (
                 self.color.r/COLOR_COMPONENT_MAX, 
@@ -267,6 +272,8 @@ def main():
             if len(selected_things) == 0:
                 new_thing = thing_generator(x,y)
                 things.append(new_thing)
+            elif isinstance(selected_things[0], ColorStream):
+                selected_things[0].rotate()
             update_things()
         if button == mouse.RIGHT:
             f = lambda t: t.x == x and t.y == y
@@ -281,7 +288,7 @@ def main():
         if symbol == key.S:
             thing_generator = lambda x, y: ColorStreamSource(
                     x,y, 
-                    Vector2d(0,1), 
+                    UP,
                     Color(COLOR_COMPONENT_MAX, 0, COLOR_COMPONENT_MAX)
                     )
         elif symbol == key.W:
