@@ -30,8 +30,10 @@ RIGHT = Vector2d(1,0)
 
 things = []
 window = None
-thing_generator = None
 label = None
+thing_generator = None
+current_level = 1
+level_complete = False
 
 
 def draw_gridlines(width, height):
@@ -278,12 +280,8 @@ class Target(ColorSink):
         t = self.target_color
         c = self.color
         if t.r == c.r and t.g == c.g and t.b == c.b:
-            global label
-            label = pyglet.text.Label('You Win!',
-                      font_name='Times New Roman',
-                      font_size=36,
-                      x=window.width//2, y=3*window.height//4,
-                      anchor_x='center', anchor_y='center')
+            global level_complete 
+            level_complete = True
 
         self.update_gl_color()
 
@@ -356,9 +354,15 @@ def main():
     
     thing_generator = lambda x, y: Wigit(x, y)
 
-    #load_level(1)
-    load_template_level()
+    load_level(current_level)
+    #load_template_level()
     update_things()
+
+    win_label = pyglet.text.Label('You Win!',
+                      font_name='Times New Roman',
+                      font_size=36,
+                      x=window.width//2, y=3*window.height//4,
+                      anchor_x='center', anchor_y='center')
 
     @window.event
     def on_draw():
@@ -368,6 +372,17 @@ def main():
         global label
         if label is not None:
             label.draw()
+        global level_complete
+        if level_complete:
+            level_complete = False
+            label = win_label
+            def next_level(dt):
+                global current_level
+                global label
+                current_level += 1
+                load_level(current_level)
+                label = None
+            pyglet.clock.schedule_once(next_level,1.0)
 
     @window.event
     def on_mouse_press(x, y, button, modifiers):
@@ -429,7 +444,7 @@ def main():
             print " ------- "
             dump_things()
         elif symbol == key.S:
-            print "saving level"
+            print "saving current_level"
             pickle.dump(things, open("save.p", "wb"))
         elif symbol == key.R:
             print "reloading"
@@ -441,7 +456,7 @@ def main():
 def load_level(level_number):
     print "loading level ", level_number
     global things
-    things = pickle.load( open('level'+str(level_number)+'.p', 'rb') )
+    things = pickle.load( open('level'+str(level_number), 'rb') )
 
 def load_template_level():
     global window
