@@ -382,7 +382,8 @@ def main():
                 current_level += 1
                 load_level(current_level)
                 label = None
-            pyglet.clock.schedule_once(next_level,1.0)
+            if current_level < 5:
+                pyglet.clock.schedule_once(next_level,1.0)
 
     @window.event
     def on_mouse_press(x, y, button, modifiers):
