@@ -5,7 +5,7 @@ from pyglet.gl import *
 from pyglet.window import mouse
 from pyglet.window import key
 
-COLOR_COMPONENT_MAX = 16.0
+COLOR_COMPONENT_MAX = 8.0
 SQUARE_SIZE = 20
 
 class Vector2d(object):
@@ -167,7 +167,7 @@ class ColorStream(Thing):
     def draw_stream(self):
         if not self.active:
             return
-        offset = SQUARE_SIZE/2
+        offset = SQUARE_SIZE//2
         x1 = self.x+offset
         y1 = self.y+offset
         if self.sink is not None:
@@ -320,7 +320,7 @@ class Wigit(ColorSink, ColorStream):
             source = self.sources[0]
             if self.output_direction == source.output_direction:
                 c = source.color
-                self.color = Color(c.r/2, c.g/2, c.b/2)
+                self.color = Color(c.r//2, c.g//2, c.b//2)
             else:
                 self.color = source.color
         elif count > 1:
@@ -446,29 +446,26 @@ def load_level(level_number):
 def load_template_level():
     global window
     things.append(ColorStreamSource(
-            window.width/4, -SQUARE_SIZE, 
+            window.width/4, 0, 
             UP,
             Color(COLOR_COMPONENT_MAX, 0, 0)
             ))
     things.append(ColorStreamSource(
-            window.width/2, -SQUARE_SIZE, 
+            window.width//2, 0, 
             UP,
             Color(0,COLOR_COMPONENT_MAX,0)
             ))
     things.append(ColorStreamSource(
-            3*window.width/4, -SQUARE_SIZE, 
+            3*window.width/4, 0, 
             UP,
             Color(0, 0, COLOR_COMPONENT_MAX)
             ))
-    attenuator = Wigit(window.width/2, window.height/4)
-    attenuator.output_direction = UP
-    things.append(attenuator)
     things.append(Target(
-            window.width/2, window.height/2,
-            Color(COLOR_COMPONENT_MAX/2, 
-                  COLOR_COMPONENT_MAX/4, 
-                  COLOR_COMPONENT_MAX/2)
-            ))
+            window.width//2, window.height//2,
+            Color(0, 
+                  COLOR_COMPONENT_MAX//4,
+                  COLOR_COMPONENT_MAX//2
+            )))
 
 def dump_things():
     for thing in things:
