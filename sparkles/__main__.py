@@ -1,4 +1,5 @@
 import pyglet
+import pickle
 import time
 from pyglet.gl import *
 from pyglet.window import mouse
@@ -12,6 +13,15 @@ class Vector2d(object):
         super(Vector2d, self).__init__()
         self.x = x
         self.y = y
+
+    def __eq__(self, other):
+        if self.x == other.x and self.y == other.y:
+            return True
+        return False
+    def __ne__(self, other):
+        if self.x == other.x and self.y == other.y:
+            return False
+        return True
 
 UP = Vector2d(0,1)
 DOWN = Vector2d(0,-1)
@@ -92,14 +102,14 @@ def find_next_sink(x, y, direction):
         return thing2
 
     reduce_function = xmin
-    if direction is RIGHT:
+    if direction == RIGHT:
         candidates = filter(lambda sink: sink.y == y and sink.x > x, sinks)
-    elif direction is LEFT:
+    elif direction == LEFT:
         candidates = filter(lambda sink: sink.y == y and sink.x < x, sinks)
-    elif direction is UP:
+    elif direction == UP:
         candidates = filter(lambda sink: sink.x == x and sink.y > y, sinks)
         reduce_function = ymin
-    elif direction is DOWN:
+    elif direction == DOWN:
         candidates = filter(lambda sink: sink.x == x and sink.y < y, sinks)
         reduce_function = ymin
 
@@ -153,12 +163,6 @@ class ColorStream(Thing):
         sequence = [UP,RIGHT,DOWN,LEFT,UP]
         next_direction = sequence.index(self.output_direction) + 1
         self.output_direction = sequence[next_direction]
-
-    def unrotate(self):
-        sequence = [UP,LEFT,DOWN,RIGHT,UP]
-        next_direction = sequence.index(self.output_direction) + 1
-        self.output_direction = sequence[next_direction]
-
 
     def draw_stream(self):
         if not self.active:
@@ -336,33 +340,6 @@ class Wigit(ColorSink, ColorStream):
     def reset_sources(self):
         super(Wigit, self).reset_sources()
 
-def load_level():
-    global window
-    things.append(ColorStreamSource(
-            window.width/4, -SQUARE_SIZE, 
-            UP,
-            Color(COLOR_COMPONENT_MAX, 0, 0)
-            ))
-    things.append(ColorStreamSource(
-            window.width/2, -SQUARE_SIZE, 
-            UP,
-            Color(0,COLOR_COMPONENT_MAX,0)
-            ))
-    things.append(ColorStreamSource(
-            3*window.width/4, -SQUARE_SIZE, 
-            UP,
-            Color(0, 0, COLOR_COMPONENT_MAX)
-            ))
-    attenuator = Wigit(window.width/2, window.height/4)
-    attenuator.output_direction = UP
-    things.append(attenuator)
-    things.append(Target(
-            window.width/2, window.height/2,
-            Color(COLOR_COMPONENT_MAX/2, 
-                  COLOR_COMPONENT_MAX/4, 
-                  COLOR_COMPONENT_MAX/2)
-            ))
-
 class AbortException(Exception):
     pass
 
@@ -379,7 +356,8 @@ def main():
     
     thing_generator = lambda x, y: Wigit(x, y)
 
-    load_level()
+    #load_level(1)
+    load_template_level()
     update_things()
 
     @window.event
@@ -434,7 +412,8 @@ def main():
     @window.event
     def on_key_press(symbol, modifiers):
         global thing_generator
-        if symbol == key.S:
+        global things
+        if symbol == key.L:
             thing_generator = lambda x, y: ColorStreamSource(
                     x,y, 
                     UP,
@@ -449,8 +428,47 @@ def main():
         elif symbol == key.D:
             print " ------- "
             dump_things()
+        elif symbol == key.S:
+            print "saving level"
+            pickle.dump(things, open("save.p", "wb"))
+        elif symbol == key.R:
+            print "reloading"
+            things = pickle.load( open('save.p', 'rb') )
+            update_things()
 
     pyglet.app.run()
+
+def load_level(level_number):
+    print "loading level ", level_number
+    global things
+    things = pickle.load( open('level'+str(level_number)+'.p', 'rb') )
+
+def load_template_level():
+    global window
+    things.append(ColorStreamSource(
+            window.width/4, -SQUARE_SIZE, 
+            UP,
+            Color(COLOR_COMPONENT_MAX, 0, 0)
+            ))
+    things.append(ColorStreamSource(
+            window.width/2, -SQUARE_SIZE, 
+            UP,
+            Color(0,COLOR_COMPONENT_MAX,0)
+            ))
+    things.append(ColorStreamSource(
+            3*window.width/4, -SQUARE_SIZE, 
+            UP,
+            Color(0, 0, COLOR_COMPONENT_MAX)
+            ))
+    attenuator = Wigit(window.width/2, window.height/4)
+    attenuator.output_direction = UP
+    things.append(attenuator)
+    things.append(Target(
+            window.width/2, window.height/2,
+            Color(COLOR_COMPONENT_MAX/2, 
+                  COLOR_COMPONENT_MAX/4, 
+                  COLOR_COMPONENT_MAX/2)
+            ))
 
 def dump_things():
     for thing in things:

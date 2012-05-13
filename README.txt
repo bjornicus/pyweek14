@@ -1,15 +1,16 @@
 Your Game Title
 ===============
 
-Entry in PyWeek #12  <http://www.pyweek.org/12/>
+Entry in PyWeek #14  <http://www.pyweek.org/14/>
 URL: http://pyweek.org/e/sparkles
-Team: YOUR TEAM NAME (leave the "Team: bit")
-Members: YOUR TEAM MEMBERS (leave the "Members: bit")
-License: see LICENSE.txt
+Team: sparkles
+Members: bjorn
+License: public domain
 
 
 Running the Game
 ----------------
+Note: this game was developed using pyglet version 1.1.4; you will need to have pyglet installed to run it.
 
 On Windows or Mac OS X, locate the "run_game.pyw" file and double-click it.
 
@@ -21,12 +22,9 @@ Othewise open a terminal / console and "cd" to the game directory and run:
 How to Play the Game
 --------------------
 
-A PyWeek Game, brought to you by the letters P and Y and the number 14
+Click on the grid to add or rotate a wigit.
 
-Move the cursor around the screen with the mouse.
-
-Press the left mouse button to fire the ducks.
-
+Your goal is to hit the target with the color that matches its border.
 
 Development notes 
 -----------------
